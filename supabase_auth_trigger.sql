@@ -1,5 +1,5 @@
 -- ============================================================
---  MotoEase — Auto-Profile Trigger
+--  EASY RIDE — Auto-Profile Trigger (UPDATED)
 --  Paste this in Supabase SQL Editor AFTER running the main schema.
 --  This creates a profile row automatically when a user registers.
 -- ============================================================
@@ -15,23 +15,32 @@ DECLARE
   user_role_val user_role;
 BEGIN
   -- Read role from metadata (sent during registration), default to 'customer'
-  user_role_val := COALESCE(
-    (NEW.raw_user_meta_data->>'role')::user_role,
-    'customer'::user_role
-  );
+  BEGIN
+    user_role_val := COALESCE(
+      (NEW.raw_user_meta_data->>'role')::user_role,
+      'customer'::user_role
+    );
+  EXCEPTION WHEN invalid_text_representation THEN
+    user_role_val := 'customer'::user_role;
+  END;
 
-  -- Insert into profiles
+  -- Insert into profiles (use UPSERT to prevent duplicate key errors)
   INSERT INTO public.profiles (id, full_name, email, phone, role, created_at, updated_at)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'User'),
+    COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''), 'User'),
     NEW.email,
-    NEW.raw_user_meta_data->>'phone',
+    NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'phone', '')), ''),
     user_role_val,
     NOW(),
     NOW()
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    full_name  = COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''), public.profiles.full_name),
+    email      = COALESCE(NEW.email, public.profiles.email),
+    phone      = COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'phone'), ''), public.profiles.phone),
+    role       = user_role_val,
+    updated_at = NOW();
 
   -- If customer, also create a customers row
   IF user_role_val = 'customer' THEN
@@ -60,15 +69,8 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================
--- OPTIONAL: Disable email confirmation (for local dev/testing)
--- Run this if you want users to log in immediately after signup
--- without needing to verify their email.
--- ============================================================
+-- IMPORTANT: Disable email confirmation for local dev/testing
 -- Go to: Supabase Dashboard > Authentication > Providers > Email
 -- Toggle OFF "Enable email confirmations"
 -- (Cannot be done via SQL — use the Dashboard UI)
-
--- ============================================================
--- Done! Now register a user on http://localhost:5173/register
--- and a profile row will be auto-created in the DB.
 -- ============================================================

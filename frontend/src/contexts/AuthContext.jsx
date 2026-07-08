@@ -35,6 +35,7 @@ export function AuthProvider({ children }) {
         return () => subscription.unsubscribe()
     }, [])
 
+    // ── Fetch Profile (with auto-create fallback) ──────────────────────
     const fetchProfile = async (userId) => {
         try {
             const { data, error } = await supabase
@@ -42,10 +43,52 @@ export function AuthProvider({ children }) {
                 .select('*')
                 .eq('id', userId)
                 .single()
+
             if (error) {
-                console.error('Error fetching profile:', error)
+                // PGRST116 = "No rows returned" — profile trigger may not have fired yet
+                if (error.code === 'PGRST116') {
+                    console.warn('Profile not found for user, trigger may not have fired yet.')
+                    // Try to get user info from auth and create profile manually
+                    const { data: authData } = await supabase.auth.getUser()
+                    if (authData?.user) {
+                        const meta = authData.user.user_metadata || {}
+                        const fallbackProfile = {
+                            id: userId,
+                            full_name: meta.full_name || 'User',
+                            email: authData.user.email || null,
+                            phone: meta.phone || null,
+                            role: meta.role || 'customer',
+                        }
+                        // Try to insert the profile row manually
+                        const { data: inserted, error: insertErr } = await supabase
+                            .from('profiles')
+                            .upsert(fallbackProfile, { onConflict: 'id' })
+                            .select()
+                            .single()
+                        if (!insertErr && inserted) {
+                            setProfile(inserted)
+                        } else {
+                            // Even if insert fails, use in-memory fallback
+                            setProfile(fallbackProfile)
+                        }
+                        // If customer role, also ensure customers row exists
+                        if ((meta.role || 'customer') === 'customer') {
+                            await supabase
+                                .from('customers')
+                                .upsert({ user_id: userId }, { onConflict: 'user_id' })
+                        }
+                        if (meta.role === 'mechanic') {
+                            await supabase
+                                .from('mechanics')
+                                .upsert({ user_id: userId, is_available: false, is_approved: false }, { onConflict: 'user_id' })
+                        }
+                    }
+                } else {
+                    console.error('Error fetching profile:', error)
+                }
+            } else {
+                setProfile(data || null)
             }
-            setProfile(data || null)
         } catch (err) {
             console.error('Exception fetching profile:', err)
         } finally {
@@ -62,14 +105,23 @@ export function AuthProvider({ children }) {
                 data: { full_name, phone, role: role || 'customer' },
             },
         })
+
         if (error) throw error
 
-        // The DB trigger (handle_new_user) auto-creates the profile row.
-        // We wait briefly to give it time to execute, then fetch the profile.
-        if (data.user) {
+        // Check if email confirmation is pending
+        if (data.user && !data.user.email_confirmed_at && data.session === null) {
+            // Email confirmation is enabled — user must confirm email before logging in
+            throw new Error(
+                'Account created! Please check your email and click the confirmation link before signing in.'
+            )
+        }
+
+        // If session exists (email confirmation disabled), fetch/create profile
+        if (data.user && data.session) {
             await new Promise(res => setTimeout(res, 800))
             await fetchProfile(data.user.id)
         }
+
         return data.user
     }, [])
 
@@ -77,11 +129,11 @@ export function AuthProvider({ children }) {
     const login = useCallback(async (emailOrPhone, password) => {
         const isEmail = emailOrPhone.includes('@')
         let credentials = {}
+
         if (isEmail) {
             credentials = { email: emailOrPhone.trim().toLowerCase(), password }
         } else {
             let cleanPhone = emailOrPhone.replace(/\s+/g, '')
-            // Default to India (+91) if it is 10 digits
             if (/^\d{10}$/.test(cleanPhone)) {
                 cleanPhone = `+91${cleanPhone}`
             } else if (/^\d{12}$/.test(cleanPhone) && cleanPhone.startsWith('91')) {
@@ -93,8 +145,20 @@ export function AuthProvider({ children }) {
         }
 
         const { data, error } = await supabase.auth.signInWithPassword(credentials)
-        if (error) throw error
 
+        if (error) {
+            // Improve error messages for common issues
+            if (error.message?.toLowerCase().includes('email not confirmed') ||
+                error.message?.toLowerCase().includes('email confirmation')) {
+                throw new Error('Please confirm your email first. Check your inbox for the confirmation link.')
+            }
+            if (error.message?.toLowerCase().includes('invalid login credentials')) {
+                throw new Error('Invalid email or password. Please try again.')
+            }
+            throw error
+        }
+
+        // Fetch profile — with fallback if profile row doesn't exist
         let profileData = null
         try {
             const { data: pData, error: pErr } = await supabase
@@ -102,7 +166,12 @@ export function AuthProvider({ children }) {
                 .select('*')
                 .eq('id', data.user.id)
                 .single()
-            if (!pErr) {
+
+            if (pErr && pErr.code === 'PGRST116') {
+                // Profile row missing — create it now
+                await fetchProfile(data.user.id)
+                profileData = profile
+            } else if (!pErr) {
                 profileData = pData
                 setProfile(pData)
             }
@@ -117,9 +186,9 @@ export function AuthProvider({ children }) {
             ...data.user,
             ...profileData,
             role,
-            full_name
+            full_name,
         }
-    }, [])
+    }, [profile])
 
     // ── Logout ────────────────────────────────────────────────────────
     const logout = useCallback(async () => {

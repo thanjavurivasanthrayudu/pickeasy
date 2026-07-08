@@ -21,13 +21,19 @@ export default function RegisterPage() {
 
     const onSubmit = async (data) => {
         try {
-            const user = await authRegister({ ...data, role })
+            await authRegister({ ...data, role })
             toast.success('Account created! Welcome to EASY RIDE 🎉')
             if (role === 'mechanic') navigate('/mechanic')
             else navigate('/customer')
         } catch (err) {
             const msg = err?.message || err?.response?.data?.message || 'Registration failed. Please try again.'
-            toast.error(msg)
+            // If the message is about email confirmation, it's not really an error
+            if (msg.toLowerCase().includes('check your email') || msg.toLowerCase().includes('confirmation link')) {
+                toast.success(msg, { duration: 8000 })
+                navigate('/login')
+            } else {
+                toast.error(msg)
+            }
         }
     }
 
