@@ -36,12 +36,7 @@ function Sidebar({ open, onClose }) {
                 <div className="sidebar-logo">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 36, height: 36, background: 'var(--primary)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Wrench size={18} color="white" strokeWidth={2.5} />
-                            </div>
-                            <span style={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: 18, color: 'white' }}>
-                                Moto<span style={{ color: 'var(--primary)' }}>Ease</span>
-                            </span>
+                            <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                         </div>
                         <button onClick={onClose} className="lg:hidden" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
                             <X size={20} />

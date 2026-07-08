@@ -87,7 +87,7 @@ export default function AdminDashboard() {
                 <div>
                     <h1 style={{ fontFamily: 'Poppins', fontSize: 26, fontWeight: 800 }}>Admin Dashboard</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>
-                        Overview of MotoEase platform — as of {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        Overview of EASY RIDE platform — as of {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
                 <button className="btn btn-primary btn-sm">Download Report</button>

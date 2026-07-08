@@ -90,7 +90,7 @@ def create_app(config_class=None) -> Flask:
     # ── Health Check ──────────────────────────────────────────────
     @app.get("/health")
     def health():
-        return jsonify({"status": "ok", "app": "MotoEase"}), 200
+        return jsonify({"status": "ok", "app": "EASY RIDE"}), 200
 
     # ── Error Handlers ────────────────────────────────────────────
     _register_error_handlers(app)

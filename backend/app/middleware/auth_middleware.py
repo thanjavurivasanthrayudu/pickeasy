@@ -44,15 +44,15 @@ def jwt_required_with_role(*allowed_roles):
 
 def handle_errors(fn):
     """
-    Decorator that catches MotoEaseBaseError and returns structured JSON.
+    Decorator that catches EasyRideBaseError and returns structured JSON.
     """
-    from app.utils.exceptions import MotoEaseBaseError
+    from app.utils.exceptions import EasyRideBaseError
 
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except MotoEaseBaseError as e:
+        except EasyRideBaseError as e:
             return jsonify(e.to_dict()), e.status_code
         except Exception as e:
             return jsonify({"error": "InternalError", "message": str(e), "code": "INTERNAL_ERROR"}), 500

@@ -1,10 +1,10 @@
 """
-MotoEase - Custom Exceptions
+EASY RIDE - Custom Exceptions
 """
 
 
-class MotoEaseBaseError(Exception):
-    """Base exception for all MotoEase errors."""
+class EasyRideBaseError(Exception):
+    """Base exception for all EASY RIDE errors."""
     status_code = 500
     code = "INTERNAL_ERROR"
 
@@ -16,36 +16,36 @@ class MotoEaseBaseError(Exception):
         return {"error": self.__class__.__name__, "message": self.message, "code": self.code}
 
 
-class ValidationError(MotoEaseBaseError):
+class ValidationError(EasyRideBaseError):
     status_code = 422
     code = "VALIDATION_ERROR"
 
 
-class AuthError(MotoEaseBaseError):
+class AuthError(EasyRideBaseError):
     status_code = 401
     code = "AUTH_ERROR"
 
 
-class ForbiddenError(MotoEaseBaseError):
+class ForbiddenError(EasyRideBaseError):
     status_code = 403
     code = "FORBIDDEN"
 
 
-class NotFoundError(MotoEaseBaseError):
+class NotFoundError(EasyRideBaseError):
     status_code = 404
     code = "NOT_FOUND"
 
 
-class ConflictError(MotoEaseBaseError):
+class ConflictError(EasyRideBaseError):
     status_code = 409
     code = "CONFLICT"
 
 
-class PaymentError(MotoEaseBaseError):
+class PaymentError(EasyRideBaseError):
     status_code = 402
     code = "PAYMENT_ERROR"
 
 
-class ServiceUnavailableError(MotoEaseBaseError):
+class ServiceUnavailableError(EasyRideBaseError):
     status_code = 503
     code = "SERVICE_UNAVAILABLE"

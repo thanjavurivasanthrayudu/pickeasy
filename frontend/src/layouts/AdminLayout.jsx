@@ -35,14 +35,9 @@ export default function AdminLayout() {
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-logo">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, background: 'var(--primary)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Wrench size={18} color="white" strokeWidth={2.5} />
-                        </div>
+                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                         <div>
-                            <span style={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: 16, color: 'white' }}>
-                                Moto<span style={{ color: 'var(--primary)' }}>Ease</span>
-                            </span>
-                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: -2 }}>Admin Panel</div>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>Admin Panel</div>
                         </div>
                     </div>
                 </div>

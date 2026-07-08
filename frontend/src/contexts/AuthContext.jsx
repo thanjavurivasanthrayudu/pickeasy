@@ -10,29 +10,47 @@ export function AuthProvider({ children }) {
 
     // ── Load session on mount ──────────────────────────────────────────
     useEffect(() => {
+        setLoading(true)
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null)
-            if (session?.user) fetchProfile(session.user.id)
-            setLoading(false)
+            if (session?.user) {
+                fetchProfile(session.user.id)
+            } else {
+                setLoading(false)
+            }
         })
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null)
-            if (session?.user) fetchProfile(session.user.id)
-            else { setProfile(null); setLoading(false) }
+            if (session?.user) {
+                setLoading(true)
+                setUser(session.user)
+                fetchProfile(session.user.id)
+            } else {
+                setUser(null)
+                setProfile(null)
+                setLoading(false)
+            }
         })
 
         return () => subscription.unsubscribe()
     }, [])
 
     const fetchProfile = async (userId) => {
-        const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single()
-        setProfile(data)
-        setLoading(false)
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single()
+            if (error) {
+                console.error('Error fetching profile:', error)
+            }
+            setProfile(data || null)
+        } catch (err) {
+            console.error('Exception fetching profile:', err)
+        } finally {
+            setLoading(false)
+        }
     }
 
     // ── Register ──────────────────────────────────────────────────────
@@ -46,16 +64,10 @@ export function AuthProvider({ children }) {
         })
         if (error) throw error
 
-        // Insert profile row
+        // The DB trigger (handle_new_user) auto-creates the profile row.
+        // We wait briefly to give it time to execute, then fetch the profile.
         if (data.user) {
-            await supabase.from('profiles').upsert({
-                id: data.user.id,
-                full_name,
-                email,
-                phone,
-                role: role || 'customer',
-                created_at: new Date().toISOString(),
-            })
+            await new Promise(res => setTimeout(res, 800))
             await fetchProfile(data.user.id)
         }
         return data.user
@@ -63,12 +75,50 @@ export function AuthProvider({ children }) {
 
     // ── Login ─────────────────────────────────────────────────────────
     const login = useCallback(async (emailOrPhone, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: emailOrPhone,
-            password,
-        })
+        const isEmail = emailOrPhone.includes('@')
+        let credentials = {}
+        if (isEmail) {
+            credentials = { email: emailOrPhone.trim().toLowerCase(), password }
+        } else {
+            let cleanPhone = emailOrPhone.replace(/\s+/g, '')
+            // Default to India (+91) if it is 10 digits
+            if (/^\d{10}$/.test(cleanPhone)) {
+                cleanPhone = `+91${cleanPhone}`
+            } else if (/^\d{12}$/.test(cleanPhone) && cleanPhone.startsWith('91')) {
+                cleanPhone = `+${cleanPhone}`
+            } else if (!cleanPhone.startsWith('+')) {
+                cleanPhone = `+${cleanPhone}`
+            }
+            credentials = { phone: cleanPhone, password }
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword(credentials)
         if (error) throw error
-        return data.user
+
+        let profileData = null
+        try {
+            const { data: pData, error: pErr } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single()
+            if (!pErr) {
+                profileData = pData
+                setProfile(pData)
+            }
+        } catch (e) {
+            console.error('Error fetching profile on login:', e)
+        }
+
+        const role = profileData?.role || data.user.user_metadata?.role || 'customer'
+        const full_name = profileData?.full_name || data.user.user_metadata?.full_name || 'User'
+
+        return {
+            ...data.user,
+            ...profileData,
+            role,
+            full_name
+        }
     }, [])
 
     // ── Logout ────────────────────────────────────────────────────────
@@ -85,18 +135,24 @@ export function AuthProvider({ children }) {
         if (!error) setProfile(prev => ({ ...prev, ...updates }))
     }, [user])
 
+    const mergedUser = user
+        ? {
+            ...user,
+            ...profile,
+            role: profile?.role || user.user_metadata?.role || 'customer',
+            full_name: profile?.full_name || user.user_metadata?.full_name || 'User',
+        }
+        : null
+
     const value = {
-        user,
+        user: mergedUser,
         profile,
         loading,
         login,
         register,
         logout,
         updateUser,
-        // Convenience: merged user object matching old interface
-        currentUser: profile
-            ? { ...profile, full_name: profile.full_name, role: profile.role }
-            : null,
+        currentUser: mergedUser,
     }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

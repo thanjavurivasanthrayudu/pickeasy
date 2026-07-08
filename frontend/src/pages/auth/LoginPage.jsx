@@ -19,7 +19,8 @@ export default function LoginPage() {
             else if (user.role === 'mechanic') navigate('/mechanic')
             else navigate('/customer')
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Login failed. Check your credentials.')
+            const msg = err?.message || err?.response?.data?.message || 'Login failed. Check your credentials.'
+            toast.error(msg)
         }
     }
 
@@ -37,13 +38,8 @@ export default function LoginPage() {
             }}>
                 {/* Logo */}
                 <div style={{ width: '100%', marginBottom: 40 }}>
-                    <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 40, height: 40, background: 'var(--primary)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Wrench size={20} color="white" strokeWidth={2.5} />
-                        </div>
-                        <span style={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: 22 }}>
-                            Moto<span style={{ color: 'var(--primary)' }}>Ease</span>
-                        </span>
+                    <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
                     </Link>
                 </div>
 

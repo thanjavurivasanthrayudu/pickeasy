@@ -40,12 +40,7 @@ export default function MechanicLayout() {
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-logo">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, background: 'var(--primary)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Wrench size={18} color="white" strokeWidth={2.5} />
-                        </div>
-                        <span style={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: 18, color: 'white' }}>
-                            Moto<span style={{ color: 'var(--primary)' }}>Ease</span>
-                        </span>
+                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                     </div>
                 </div>
 

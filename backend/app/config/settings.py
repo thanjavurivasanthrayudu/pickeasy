@@ -14,7 +14,7 @@ class BaseConfig:
     """Base configuration shared by all environments."""
 
     # ── App ──────────────────────────────────────────────────────────
-    APP_NAME = os.getenv("APP_NAME", "MotoEase")
+    APP_NAME = os.getenv("APP_NAME", "EASY RIDE")
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
     BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -60,7 +60,7 @@ class BaseConfig:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.getenv(
-        "MAIL_DEFAULT_SENDER", "MotoEase <noreply@motoease.com>"
+        "MAIL_DEFAULT_SENDER", "EASY RIDE <noreply@easyride.com>"
     )
 
     # ── Twilio ───────────────────────────────────────────────────────
