@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, Wrench, ArrowRight, User, Bike, Shield } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, User, Bike, Shield, KeyRound } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+
+// ⚠️ Change this secret key to something only admins know
+const ADMIN_SECRET_KEY = 'ADMIN2024'
 
 const ROLES = [
     { value: 'customer', label: 'Customer', icon: User, desc: 'Book bike services' },
     { value: 'mechanic', label: 'Mechanic', icon: Bike, desc: 'Offer repair services' },
+    { value: 'admin', label: 'Admin', icon: Shield, desc: 'Manage the platform' },
 ]
 
 export default function RegisterPage() {
@@ -16,18 +20,27 @@ export default function RegisterPage() {
     const [searchParams] = useSearchParams()
     const [role, setRole] = useState(searchParams.get('role') || 'customer')
     const [showPass, setShowPass] = useState(false)
+    const [showAdminKey, setShowAdminKey] = useState(false)
     const [activeModal, setActiveModal] = useState(null)
     const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm()
 
     const onSubmit = async (data) => {
+        // Validate admin secret key
+        if (role === 'admin') {
+            if (!data.admin_key || data.admin_key.trim() !== ADMIN_SECRET_KEY) {
+                toast.error('Invalid Admin Secret Key. Access denied.')
+                return
+            }
+        }
+
         try {
             await authRegister({ ...data, role })
             toast.success('Account created! Welcome to EASY RIDE 🎉')
-            if (role === 'mechanic') navigate('/mechanic')
+            if (role === 'admin') navigate('/admin')
+            else if (role === 'mechanic') navigate('/mechanic')
             else navigate('/customer')
         } catch (err) {
             const msg = err?.message || err?.response?.data?.message || 'Registration failed. Please try again.'
-            // If the message is about email confirmation, it's not really an error
             if (msg.toLowerCase().includes('check your email') || msg.toLowerCase().includes('confirmation link')) {
                 toast.success(msg, { duration: 8000 })
                 navigate('/login')
@@ -56,22 +69,52 @@ export default function RegisterPage() {
                 <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 14 }}>Join thousands of riders and mechanics on EASY RIDE.</p>
 
                 {/* Role Toggle */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
                     {ROLES.map(r => (
                         <button key={r.value} type="button" id={`role-${r.value}`}
                             onClick={() => setRole(r.value)}
                             style={{
-                                flex: 1, padding: '14px 12px', borderRadius: 14, cursor: 'pointer',
-                                border: `2px solid ${role === r.value ? 'var(--primary)' : 'var(--border)'}`,
-                                background: role === r.value ? 'var(--primary-light)' : 'white',
-                                transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                                flex: 1, padding: '12px 8px', borderRadius: 14, cursor: 'pointer',
+                                border: `2px solid ${role === r.value
+                                    ? r.value === 'admin' ? '#7C3AED' : 'var(--primary)'
+                                    : 'var(--border)'}`,
+                                background: role === r.value
+                                    ? r.value === 'admin' ? 'rgba(124,58,237,0.08)' : 'var(--primary-light)'
+                                    : 'white',
+                                transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                             }}>
-                            <r.icon size={22} color={role === r.value ? 'var(--primary)' : 'var(--text-secondary)'} />
-                            <span style={{ fontWeight: 700, fontSize: 13, color: role === r.value ? 'var(--primary)' : 'var(--text-primary)' }}>{r.label}</span>
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.desc}</span>
+                            <r.icon size={20} color={
+                                role === r.value
+                                    ? r.value === 'admin' ? '#7C3AED' : 'var(--primary)'
+                                    : 'var(--text-secondary)'
+                            } />
+                            <span style={{
+                                fontWeight: 700, fontSize: 12,
+                                color: role === r.value
+                                    ? r.value === 'admin' ? '#7C3AED' : 'var(--primary)'
+                                    : 'var(--text-primary)'
+                            }}>{r.label}</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{r.desc}</span>
                         </button>
                     ))}
                 </div>
+
+                {/* Admin Warning Banner */}
+                {role === 'admin' && (
+                    <div style={{
+                        display: 'flex', gap: 10, padding: '12px 16px',
+                        background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.3)',
+                        borderRadius: 12, marginBottom: 20, alignItems: 'flex-start',
+                    }}>
+                        <Shield size={16} color="#7C3AED" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <div>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: '#7C3AED', marginBottom: 2 }}>Admin Registration</p>
+                            <p style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                You need a secret Admin Key to register as an administrator. Contact your system owner to get the key.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div className="form-group">
@@ -129,12 +172,45 @@ export default function RegisterPage() {
                         {errors.confirm_password && <span className="form-error">{errors.confirm_password.message}</span>}
                     </div>
 
+                    {/* Admin Secret Key Field — only shown when Admin role is selected */}
+                    {role === 'admin' && (
+                        <div className="form-group">
+                            <label className="form-label" style={{ color: '#7C3AED' }}>
+                                <KeyRound size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                                Admin Secret Key
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    id="admin_key"
+                                    type={showAdminKey ? 'text' : 'password'}
+                                    className={`form-input ${errors.admin_key ? 'error' : ''}`}
+                                    placeholder="Enter admin secret key"
+                                    style={{
+                                        paddingRight: 48,
+                                        border: '2px solid rgba(124,58,237,0.4)',
+                                        outline: 'none',
+                                    }}
+                                    {...register('admin_key', { required: 'Admin secret key is required' })}
+                                />
+                                <button type="button" onClick={() => setShowAdminKey(v => !v)}
+                                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#7C3AED' }}>
+                                    {showAdminKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            {errors.admin_key && <span className="form-error">{errors.admin_key.message}</span>}
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: 8, padding: '12px 16px', background: 'rgba(225,29,46,0.06)', borderRadius: 10, fontSize: 12, color: 'var(--text-secondary)', alignItems: 'flex-start' }}>
                         <Shield size={14} color="var(--primary)" style={{ marginTop: 1, flexShrink: 0 }} />
                         <span>By creating an account, you agree to our <button type="button" onClick={() => setActiveModal('terms')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>Terms of Service</button> and <button type="button" onClick={() => setActiveModal('privacy')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>Privacy Policy</button>.</span>
                     </div>
 
-                    <button id="register-submit" type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ height: 52, fontSize: 16, marginTop: 4 }}>
+                    <button id="register-submit" type="submit" className="btn btn-primary" disabled={isSubmitting}
+                        style={{
+                            height: 52, fontSize: 16, marginTop: 4,
+                            background: role === 'admin' ? 'linear-gradient(135deg, #7C3AED, #5B21B6)' : undefined,
+                        }}>
                         {isSubmitting ? 'Creating account...' : 'Create Account'} <ArrowRight size={18} />
                     </button>
                 </form>
