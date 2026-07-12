@@ -108,45 +108,62 @@ export default function AdminDashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {profiles.filter(p => p.role === 'mechanic').slice(0, 5).map((m, i) => (
-                            <tr key={i}>
-                                <td style={{ fontWeight: 600 }}>{m.full_name}</td>
-                                <td>{'Verified'}</td>
-                                <td>
-                                    <span className={`badge ${m.status === 'suspended' ? 'badge-danger' : m.status === 'pending' ? 'badge-warning' : 'badge-info'}`}>
-                                        {m.status || 'Active'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: 'flex', gap: 8 }}>
-                                        {m.status !== 'active' && (
-                                            <button onClick={async () => {
-                                                const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
-                                                if (!error) { toast.success('Approved'); refetch() } else { toast.error(error.message) }
-                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Approve">
-                                                Approve
-                                            </button>
-                                        )}
-                                        {m.status !== 'rejected' && m.status === 'pending' && (
-                                            <button onClick={async () => {
-                                                const { error } = await supabase.from('profiles').update({ status: 'rejected' }).eq('id', m.id)
-                                                if (!error) { toast.success('Rejected'); refetch() } else { toast.error(error.message) }
-                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(225, 29, 46, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Reject">
-                                                Reject
-                                            </button>
-                                        )}
-                                        {m.status !== 'suspended' && m.status !== 'pending' && (
-                                            <button onClick={async () => {
-                                                const { error } = await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
-                                                if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
-                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Suspend">
-                                                Suspend
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {profiles.filter(p => p.role === 'mechanic').slice(0, 5).map((m, i) => {
+                            const mechanicData = Array.isArray(m.mechanic) ? m.mechanic[0] : m.mechanic
+                            const isApproved = mechanicData?.is_approved
+                            const isActive = m.is_active
+
+                            let statusText = isActive ? (isApproved ? 'Active' : 'Pending') : 'Suspended'
+                            let badgeClass = isActive ? (isApproved ? 'badge-info' : 'badge-warning') : 'badge-danger'
+
+                            return (
+                                <tr key={i}>
+                                    <td style={{ fontWeight: 600 }}>{m.full_name}</td>
+                                    <td>{'Verified'}</td>
+                                    <td>
+                                        <span className={`badge ${badgeClass}`}>
+                                            {statusText}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            {isActive && !isApproved && (
+                                                <button onClick={async () => {
+                                                    const { error } = await supabase.from('mechanics').update({ is_approved: true }).eq('user_id', m.id)
+                                                    if (!error) { toast.success('Approved'); refetch() } else { toast.error(error.message) }
+                                                }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Approve">
+                                                    Approve
+                                                </button>
+                                            )}
+                                            {isActive && !isApproved && (
+                                                <button onClick={async () => {
+                                                    const { error } = await supabase.from('mechanics').update({ is_approved: false }).eq('user_id', m.id)
+                                                    if (!error) { toast.success('Rejected'); refetch() } else { toast.error(error.message) }
+                                                }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(225, 29, 46, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Reject">
+                                                    Reject
+                                                </button>
+                                            )}
+                                            {!isActive && (
+                                                <button onClick={async () => {
+                                                    const { error } = await supabase.from('profiles').update({ is_active: true }).eq('id', m.id)
+                                                    if (!error) { toast.success('Activated'); refetch() } else { toast.error(error.message) }
+                                                }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Activate">
+                                                    Activate
+                                                </button>
+                                            )}
+                                            {isActive && (
+                                                <button onClick={async () => {
+                                                    const { error } = await supabase.from('profiles').update({ is_active: false }).eq('id', m.id)
+                                                    if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
+                                                }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Suspend">
+                                                    Suspend
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            )
+                        })}
                     </tbody>
                 </table>
             </div>

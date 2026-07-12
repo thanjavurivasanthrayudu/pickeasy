@@ -152,7 +152,11 @@ export function useAllProfiles() {
     return useSupabaseQuery(async () => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select(`
+                *,
+                mechanic:mechanics(id, is_approved, is_available),
+                customer:customers(id, loyalty_points)
+            `)
             .order('created_at', { ascending: false })
         if (error) throw error
         return data || []

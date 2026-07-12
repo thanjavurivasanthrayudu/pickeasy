@@ -50,38 +50,53 @@ export default function MechanicManagement() {
             <tbody>
               {mechanics.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-secondary)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-secondary)' }}>
                     No mechanics found.
                   </td>
                 </tr>
               ) : (
-                mechanics.map(m => (
-                  <tr key={m.id} style={{ borderTop: '1px solid var(--border)' }}>
-                    <td style={{ padding: '16px 24px', fontWeight: 600 }}>{m.full_name || 'N/A'}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.email || 'N/A'}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.phone || 'N/A'}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{new Date(m.created_at).toLocaleDateString()}</td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <span className={`badge ${m.status === 'suspended' ? 'badge-danger' : m.status === 'pending' ? 'badge-warning' : 'badge-success'}`}>
-                        {m.status || 'Active'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', display: 'flex', gap: 8 }}>
-                      {m.status !== 'active' && (
-                        <button onClick={async () => {
-                          const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
-                          if (!error) { toast.success('Approved'); refetch() } else { toast.error(error.message) }
-                        }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Approve</button>
-                      )}
-                      {m.status !== 'suspended' && (
-                        <button onClick={async () => {
-                          const { error } = await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
-                          if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
-                        }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Suspend</button>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                mechanics.map(m => {
+                  const mechanicData = Array.isArray(m.mechanic) ? m.mechanic[0] : m.mechanic
+                  const isApproved = mechanicData?.is_approved
+                  const isActive = m.is_active
+
+                  let statusText = isActive ? (isApproved ? 'Active' : 'Pending') : 'Suspended'
+                  let badgeClass = isActive ? (isApproved ? 'badge-success' : 'badge-warning') : 'badge-danger'
+
+                  return (
+                    <tr key={m.id} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td style={{ padding: '16px 24px', fontWeight: 600 }}>{m.full_name || 'N/A'}</td>
+                      <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.email || 'N/A'}</td>
+                      <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.phone || 'N/A'}</td>
+                      <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{new Date(m.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span className={`badge ${badgeClass}`}>
+                          {statusText}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 24px', display: 'flex', gap: 8 }}>
+                        {isActive && !isApproved && (
+                          <button onClick={async () => {
+                            const { error } = await supabase.from('mechanics').update({ is_approved: true }).eq('user_id', m.id)
+                            if (!error) { toast.success('Approved'); refetch() } else { toast.error(error.message) }
+                          }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Approve</button>
+                        )}
+                        {!isActive && (
+                          <button onClick={async () => {
+                            const { error } = await supabase.from('profiles').update({ is_active: true }).eq('id', m.id)
+                            if (!error) { toast.success('Activated'); refetch() } else { toast.error(error.message) }
+                          }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Activate</button>
+                        )}
+                        {isActive && (
+                          <button onClick={async () => {
+                            const { error } = await supabase.from('profiles').update({ is_active: false }).eq('id', m.id)
+                            if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
+                          }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Suspend</button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
