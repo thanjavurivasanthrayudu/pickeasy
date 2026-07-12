@@ -6,7 +6,8 @@ import { useMechanicRecord, useMechanicJobs } from '../../hooks/useSupabase'
 export default function MechanicDashboard() {
   const { user } = useAuth()
   const { data: mechanicRecord } = useMechanicRecord(user?.id)
-  const { data: jobs = [] } = useMechanicJobs(mechanicRecord?.id)
+  const { data: jobsData } = useMechanicJobs(mechanicRecord?.id)
+  const jobs = jobsData || []
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)

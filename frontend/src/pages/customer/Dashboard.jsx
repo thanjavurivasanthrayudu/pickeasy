@@ -14,7 +14,8 @@ const QUICK_ACTIONS = [
 export default function CustomerDashboard() {
   const { user } = useAuth()
   const { data: customerRecord } = useCustomerRecord(user?.id)
-  const { data: bookings = [] } = useCustomerBookings(customerRecord?.id)
+  const { data: bookingsData } = useCustomerBookings(customerRecord?.id)
+  const bookings = bookingsData || []
 
   const greeting = () => {
     const h = new Date().getHours()
