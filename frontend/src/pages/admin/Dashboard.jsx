@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Users, Wrench, Calendar, CreditCard, TrendingUp, ShoppingCart,
     Star, AlertCircle, Clock, CheckCircle, XCircle, PauseCircle, PlayCircle,
     Package, ArrowUp, ArrowDown, Database, DollarSign, RefreshCw
 } from 'lucide-react'
+import { useAllBookings, useAllProfiles } from '../../hooks/useSupabase'
+import { supabase } from '../../services/supabase'
 
 function StatCard({ icon: Icon, label, value, change, changeDir, color }) {
     return (
@@ -41,6 +44,23 @@ function SectionHeader({ title, icon: Icon }) {
 }
 
 export default function AdminDashboard() {
+    const { data: bookings = [] } = useAllBookings()
+    const { data: profiles = [] } = useAllProfiles()
+    const navigate = useNavigate()
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const todaysBookings = bookings.filter(b => new Date(b.created_at) >= today)
+    const todaysRevenue = todaysBookings.filter(b => b.status === 'completed' || b.status === 'paid').reduce((sum, b) => sum + (b.total_amount || b.service_packages?.base_price || 0), 0)
+
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const monthlyRevenue = bookings.filter(b => new Date(b.created_at) >= thisMonth && (b.status === 'completed' || b.status === 'paid')).reduce((sum, b) => sum + (b.total_amount || b.service_packages?.base_price || 0), 0)
+
+    const customerCount = profiles.filter(p => p.role === 'customer').length
+    const mechanicCount = profiles.filter(p => p.role === 'mechanic').length
+    const pendingJobs = bookings.filter(b => b.status === 'pending' || b.status === 'in_progress').length
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -51,8 +71,8 @@ export default function AdminDashboard() {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
-                    <button className="btn btn-primary btn-sm" style={{ padding: '8px 16px', background: 'white', color: 'black', border: '1px solid #ccc' }}>Generate Report</button>
-                    <button className="btn btn-primary btn-sm" style={{ padding: '8px 16px' }}>Manage Store</button>
+                    <button onClick={() => navigate('/admin/reports')} className="btn btn-primary btn-sm" style={{ padding: '8px 16px', background: 'white', color: 'black', border: '1px solid #ccc' }}>Generate Report</button>
+                    <button onClick={() => navigate('/admin/inventory')} className="btn btn-primary btn-sm" style={{ padding: '8px 16px' }}>Manage Store</button>
                 </div>
             </div>
 
@@ -63,15 +83,15 @@ export default function AdminDashboard() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                 gap: 16
             }}>
-                <StatCard icon={Calendar} label="Today's Bookings" value="94" change={12} changeDir="up" color="var(--primary)" />
-                <StatCard icon={CreditCard} label="Today's Revenue" value="₹89,450" change={18} changeDir="up" color="#10B981" />
-                <StatCard icon={TrendingUp} label="Monthly Revenue" value="₹4.2L" change={5} changeDir="up" color="#8B5CF6" />
-                <StatCard icon={Wrench} label="Mechanics Online" value="184" change={2} changeDir="down" color="#F59E0B" />
-                <StatCard icon={Users} label="Customers" value="62,109" change={4} changeDir="up" color="#3B82F6" />
-                <StatCard icon={ShoppingCart} label="Orders" value="1,245" change={8} changeDir="up" color="#F43F5E" />
+                <StatCard icon={Calendar} label="Today's Bookings" value={todaysBookings.length} change={12} changeDir="up" color="var(--primary)" />
+                <StatCard icon={CreditCard} label="Today's Revenue" value={`₹${todaysRevenue.toLocaleString()}`} change={18} changeDir="up" color="#10B981" />
+                <StatCard icon={TrendingUp} label="Monthly Revenue" value={`₹${monthlyRevenue.toLocaleString()}`} change={5} changeDir="up" color="#8B5CF6" />
+                <StatCard icon={Wrench} label="Mechanics" value={mechanicCount} change={2} changeDir="down" color="#F59E0B" />
+                <StatCard icon={Users} label="Customers" value={customerCount} change={4} changeDir="up" color="#3B82F6" />
+                <StatCard icon={ShoppingCart} label="Total Bookings" value={bookings.length} change={8} changeDir="up" color="#F43F5E" />
                 <StatCard icon={Star} label="Ratings" value="4.82★" change={1} changeDir="up" color="#EAB308" />
-                <StatCard icon={AlertCircle} label="Complaints" value="8" change={12} changeDir="down" color="var(--danger)" />
-                <StatCard icon={Clock} label="Pending Jobs" value="41" color="#64748B" />
+                <StatCard icon={AlertCircle} label="Complaints" value="0" change={0} changeDir="down" color="var(--danger)" />
+                <StatCard icon={Clock} label="Pending Jobs" value={pendingJobs} color="#64748B" />
             </div>
 
             {/* MECHANIC APPROVAL SECTION */}
@@ -87,17 +107,13 @@ export default function AdminDashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {[
-                            { name: 'Ravi Kumar', doc: 'Verified', status: 'Pending Approval' },
-                            { name: 'Suresh Patel', doc: 'Verified', status: 'Suspended' },
-                            { name: 'Amit Singh', doc: 'Missing ID', status: 'In Review' },
-                        ].map((m, i) => (
+                        {profiles.filter(p => p.role === 'mechanic').slice(0, 5).map((m, i) => (
                             <tr key={i}>
-                                <td style={{ fontWeight: 600 }}>{m.name}</td>
-                                <td>{m.doc}</td>
+                                <td style={{ fontWeight: 600 }}>{m.full_name}</td>
+                                <td>{'Verified'}</td>
                                 <td>
-                                    <span className={`badge ${m.status.includes('Pending') ? 'badge-warning' : m.status.includes('Suspend') ? 'badge-danger' : 'badge-info'}`}>
-                                        {m.status}
+                                    <span className={`badge ${m.status === 'suspended' ? 'badge-danger' : m.status === 'pending' ? 'badge-warning' : 'badge-info'}`}>
+                                        {m.status || 'Active'}
                                     </span>
                                 </td>
                                 <td>
@@ -148,8 +164,8 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--danger)' }}>14</div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-                            <button className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Purchase Stock</button>
-                            <button className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Manage Vendors</button>
+                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Purchase Stock</button>
+                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Manage Vendors</button>
                         </div>
                     </div>
                 </div>
@@ -162,25 +178,25 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <CreditCard size={24} color="#10B981" />
                                 <div>
-                                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Customer Payments</div>
-                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cleared today</div>
+                                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Total Revenue</div>
+                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>All time collections</div>
                                 </div>
                             </div>
-                            <div style={{ fontSize: 20, fontWeight: 800 }}>₹94,500</div>
+                            <div style={{ fontSize: 20, fontWeight: 800 }}>₹{bookings.filter(b => b.status === 'completed' || b.status === 'paid').reduce((sum, b) => sum + (b.total_amount || b.service_packages?.base_price || 0), 0).toLocaleString()}</div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <RefreshCw size={24} color="#F59E0B" />
                                 <div>
-                                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Mechanic Payouts</div>
-                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Pending clearance</div>
+                                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Pending Payouts</div>
+                                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>estimated payouts pending</div>
                                 </div>
                             </div>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: '#F59E0B' }}>₹32,100</div>
+                            <div style={{ fontSize: 20, fontWeight: 800, color: '#F59E0B' }}>₹0</div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-                            <button className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Calculate Commission</button>
-                            <button className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Process Refunds</button>
+                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Calculate Commission</button>
+                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Process Refunds</button>
                         </div>
                     </div>
                 </div>

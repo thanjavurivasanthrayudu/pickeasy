@@ -1,9 +1,14 @@
-// Mechanic Management — Full implementation
 import { useState } from 'react'
-import { BarChart2, Plus, Search, Filter, Download } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
+import { useAllProfiles } from '../../hooks/useSupabase'
 
 export default function MechanicManagement() {
   const [search, setSearch] = useState('')
+  const { data: profiles = [], loading } = useAllProfiles()
+
+  const mechanics = profiles
+    .filter(p => p.role === 'mechanic')
+    .filter(p => p.full_name?.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div>
@@ -22,19 +27,48 @@ export default function MechanicManagement() {
               style={{ padding: '9px 12px 9px 36px', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', width: 220 }}
             />
           </div>
-          <button className="btn btn-primary btn-sm" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <Plus size={16} /> Add New
-          </button>
         </div>
       </div>
 
-      <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🔧</div>
-        <h2 style={{ fontFamily: 'Poppins', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Mechanic Management</h2>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.7 }}>Approve, reject, suspend mechanics.</p>
-        <div style={{ display: 'inline-flex', gap: 8, background: 'var(--primary-light)', color: 'var(--primary)', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 600 }}>
-          ✅ Module ready — API integration pending backend connection
-        </div>
+      <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>Loading mechanics...</div>
+        ) : (
+          <table className="data-table" style={{ width: '100%', minWidth: 600 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Name</th>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Email</th>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Phone</th>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Joined</th>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mechanics.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-secondary)' }}>
+                    No mechanics found.
+                  </td>
+                </tr>
+              ) : (
+                mechanics.map(m => (
+                  <tr key={m.id} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px 24px', fontWeight: 600 }}>{m.full_name || 'N/A'}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.email || 'N/A'}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.phone || 'N/A'}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{new Date(m.created_at).toLocaleDateString()}</td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <span className={`badge ${m.status === 'suspended' ? 'badge-danger' : m.status === 'pending' ? 'badge-warning' : 'badge-success'}`}>
+                        {m.status || 'Active'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )

@@ -1,23 +1,50 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import { Trophy, Star, TrendingUp, CheckCircle, Award } from 'lucide-react'
-
-const WEEKLY = [
-  { day: 'Mon', jobs: 4, earn: 2400 }, { day: 'Tue', jobs: 6, earn: 3800 },
-  { day: 'Wed', jobs: 3, earn: 1800 }, { day: 'Thu', jobs: 7, earn: 4200 },
-  { day: 'Fri', jobs: 5, earn: 3100 }, { day: 'Sat', jobs: 9, earn: 5600 },
-  { day: 'Sun', jobs: 2, earn: 1200 },
-]
-
-const RECENT_JOBS = [
-  { customer: 'Arjun Sharma', service: 'Standard Service', status: 'completed', earned: '₹680', vehicle: 'RE Classic 350' },
-  { customer: 'Priya Nair', service: 'Oil Change', status: 'completed', earned: '₹270', vehicle: 'Honda CB Shine' },
-  { customer: 'Karthik R.', service: 'Full Service', status: 'in_progress', earned: '₹1,020', vehicle: 'Bajaj Pulsar 150' },
-]
+import { useAuth } from '../../contexts/AuthContext'
+import { useMechanicRecord, useMechanicJobs } from '../../hooks/useSupabase'
 
 export default function MechanicDashboard() {
-  const todayEarn = WEEKLY.slice(-1)[0].earn
-  const weekEarn = WEEKLY.reduce((s, d) => s + d.earn, 0)
-  const weekJobs = WEEKLY.reduce((s, d) => s + d.jobs, 0)
+  const { user } = useAuth()
+  const { data: mechanicRecord } = useMechanicRecord(user?.id)
+  const { data: jobs = [] } = useMechanicJobs(mechanicRecord?.id)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const todayEarn = jobs.filter(j => new Date(j.created_at) >= today && (j.status === 'completed' || j.status === 'paid')).reduce((sum, j) => sum + (j.total_amount || j.service_packages?.base_price || 0), 0)
+
+  // This week logic
+  const dayOfWeek = (today.getDay() || 7) - 1 // Mon = 0
+  const thisWeekStart = new Date(today)
+  thisWeekStart.setDate(today.getDate() - dayOfWeek)
+
+  const weekJobsList = jobs.filter(j => new Date(j.created_at) >= thisWeekStart)
+  const weekJobs = weekJobsList.length
+  const weekEarn = weekJobsList.filter(j => j.status === 'completed' || j.status === 'paid').reduce((sum, j) => sum + (j.total_amount || j.service_packages?.base_price || 0), 0)
+
+  const WEEKLY = [
+    { day: 'Mon', jobs: 0, earn: 0 }, { day: 'Tue', jobs: 0, earn: 0 },
+    { day: 'Wed', jobs: 0, earn: 0 }, { day: 'Thu', jobs: 0, earn: 0 },
+    { day: 'Fri', jobs: 0, earn: 0 }, { day: 'Sat', jobs: 0, earn: 0 },
+    { day: 'Sun', jobs: 0, earn: 0 },
+  ]
+
+  weekJobsList.forEach(j => {
+    const d = new Date(j.created_at)
+    let idx = (d.getDay() || 7) - 1
+    WEEKLY[idx].jobs += 1
+    if (j.status === 'completed' || j.status === 'paid') {
+      WEEKLY[idx].earn += (j.total_amount || j.service_packages?.base_price || 0)
+    }
+  })
+
+  const recentJobs = jobs.slice(0, 5).map(j => ({
+    customer: j.customers?.profiles?.full_name || 'Walk-in',
+    service: j.service_packages?.name || 'Standard Service',
+    status: j.status,
+    earned: `₹${j.total_amount || j.service_packages?.base_price || 0}`,
+    vehicle: j.vehicles ? `${j.vehicles.brand} ${j.vehicles.model}` : 'Unknown'
+  }))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -25,10 +52,10 @@ export default function MechanicDashboard() {
       <div style={{ background: 'linear-gradient(135deg, #111111 0%, #1A0A0A 100%)', borderRadius: 20, padding: '28px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
         <div>
           <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>Welcome back,</div>
-          <h1 style={{ fontFamily: 'Poppins', fontSize: 26, fontWeight: 800, color: 'white', marginBottom: 8 }}>Ravi Kumar 🔧</h1>
+          <h1 style={{ fontFamily: 'Poppins', fontSize: 26, fontWeight: 800, color: 'white', marginBottom: 8 }}>{user?.full_name} 🔧</h1>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-              <Star size={14} fill="#F59E0B" color="#F59E0B" /> 4.9 Rating
+              <Star size={14} fill="#F59E0B" color="#F59E0B" /> {mechanicRecord?.rating || '4.9'} Rating
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
               <CheckCircle size={14} color="#10B981" /> 98% Completion
@@ -49,7 +76,7 @@ export default function MechanicDashboard() {
         {[
           { label: "This Week's Jobs", value: weekJobs, icon: CheckCircle, color: '#10B981' },
           { label: "Week Earnings", value: `₹${weekEarn.toLocaleString()}`, icon: TrendingUp, color: 'var(--primary)' },
-          { label: "Avg Rating", value: '4.9 ⭐', icon: Star, color: '#F59E0B' },
+          { label: "Avg Rating", value: `${mechanicRecord?.rating || '4.9'} ⭐`, icon: Star, color: '#F59E0B' },
           { label: "Leaderboard Rank", value: '#3', icon: Trophy, color: '#8B5CF6' },
         ].map(s => (
           <div key={s.label} className="stat-card">
@@ -62,7 +89,7 @@ export default function MechanicDashboard() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
         {/* Earnings Chart */}
         <div className="card">
           <h2 style={{ fontFamily: 'Poppins', fontSize: 15, fontWeight: 700, marginBottom: 4 }}>This Week's Earnings</h2>
@@ -74,7 +101,7 @@ export default function MechanicDashboard() {
               <YAxis tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
               <Tooltip formatter={v => [`₹${v}`, 'Earned']} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg)' }} />
               <Bar dataKey="earn" radius={[6, 6, 0, 0]}>
-                {WEEKLY.map((_, i) => <Cell key={i} fill={i === 5 ? '#E11D2E' : '#E11D2E55'} />)}
+                {WEEKLY.map((_, i) => <Cell key={i} fill={i === (new Date().getDay() || 7) - 1 ? '#E11D2E' : '#E11D2E55'} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -85,10 +112,10 @@ export default function MechanicDashboard() {
           <h2 style={{ fontFamily: 'Poppins', fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Your Badges</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { icon: '🔥', label: 'On Fire', desc: '7 jobs in a day', earned: true },
-              { icon: '⭐', label: 'Top Rated', desc: '4.9+ avg rating', earned: true },
+              { icon: '🔥', label: 'On Fire', desc: '7+ jobs in a day', earned: weekJobs > 7 },
+              { icon: '⭐', label: 'Top Rated', desc: '4.9+ avg rating', earned: (mechanicRecord?.rating || 0) >= 4.9 },
               { icon: '🏆', label: 'Champion', desc: 'Week 1 leaderboard', earned: false },
-              { icon: '💎', label: 'Gold Mechanic', desc: '500+ jobs', earned: false },
+              { icon: '💎', label: 'Gold Mechanic', desc: '500+ jobs', earned: jobs.length > 500 },
             ].map(b => (
               <div key={b.label} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 14px', borderRadius: 12, background: b.earned ? 'var(--primary-light)' : 'var(--bg-secondary)', opacity: b.earned ? 1 : 0.5 }}>
                 <span style={{ fontSize: 24 }}>{b.icon}</span>
@@ -113,7 +140,9 @@ export default function MechanicDashboard() {
             <tr><th>Customer</th><th>Vehicle</th><th>Service</th><th>Status</th><th>Earned</th></tr>
           </thead>
           <tbody>
-            {RECENT_JOBS.map((j, i) => (
+            {recentJobs.length === 0 ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px 0' }}>No recent jobs found.</td></tr>
+            ) : recentJobs.map((j, i) => (
               <tr key={i}>
                 <td style={{ fontWeight: 600 }}>{j.customer}</td>
                 <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{j.vehicle}</td>

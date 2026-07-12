@@ -13,18 +13,13 @@ const NAV = [
     { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { to: '/admin/customers', label: 'Customer Management', icon: Users },
     { to: '/admin/mechanics', label: 'Mechanic Management', icon: Wrench },
-    { to: '/admin/documents', label: 'Document Verification', icon: FileText },
-    { to: '/admin/monitor', label: 'Live Booking Monitor', icon: Activity },
+    { to: '/admin/bookings', label: 'Bookings', icon: FileText },
     { to: '/admin/inventory', label: 'Inventory', icon: Package },
     { to: '/admin/payments', label: 'Payments', icon: CreditCard },
     { to: '/admin/reports', label: 'Reports', icon: BarChart2 },
     { to: '/admin/leaderboard', label: 'Leaderboards', icon: Trophy },
     { to: '/admin/coupons', label: 'Coupons', icon: Tag },
-    { to: '/admin/notifications', label: 'Notifications', icon: Bell },
-    { to: '/admin/cms', label: 'CMS', icon: Layers },
     { to: '/admin/settings', label: 'Settings', icon: Settings },
-    { to: '/admin/audit', label: 'Audit Logs', icon: MonitorDot },
-    { to: '/admin/analytics', label: 'Analytics', icon: PieChart },
 ]
 
 export default function AdminLayout() {

@@ -1,12 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Calendar, Car, FileText, Star, Plus, Clock, CheckCircle, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCustomerRecord, useCustomerBookings } from '../../hooks/useSupabase'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-
-const SPEND_DATA = [
-  { month: 'Feb', amount: 999 }, { month: 'Mar', amount: 0 }, { month: 'Apr', amount: 1499 },
-  { month: 'May', amount: 399 }, { month: 'Jun', amount: 999 }, { month: 'Jul', amount: 199 },
-]
 
 const QUICK_ACTIONS = [
   { to: '/customer/bookings/new', icon: Plus, label: 'Book Service', color: 'var(--primary)', bg: 'var(--primary-light)' },
@@ -15,19 +11,47 @@ const QUICK_ACTIONS = [
   { to: '/customer/reviews', icon: Star, label: 'Reviews', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
 ]
 
-const RECENT = [
-  { service: 'Standard Service', date: 'July 5, 2026', status: 'completed', amount: '₹999', mechanic: 'Ravi Kumar', vehicle: 'Royal Enfield 350' },
-  { service: 'Oil Change', date: 'June 20, 2026', status: 'completed', amount: '₹399', mechanic: 'Suresh P.', vehicle: 'Honda CB Shine' },
-]
-
 export default function CustomerDashboard() {
   const { user } = useAuth()
+  const { data: customerRecord } = useCustomerRecord(user?.id)
+  const { data: bookings = [] } = useCustomerBookings(customerRecord?.id)
+
   const greeting = () => {
     const h = new Date().getHours()
     if (h < 12) return 'Good morning'
     if (h < 18) return 'Good afternoon'
     return 'Good evening'
   }
+
+  // Calculate stats from real data
+  const totalBookings = bookings.length
+  const completedBookings = bookings.filter(b => b.status === 'completed').length
+  const totalSpent = bookings.filter(b => b.status === 'completed' || b.status === 'paid').reduce((sum, b) => sum + (b.total_amount || b.service_packages?.base_price || 0), 0)
+
+  // Aggregate spend data by month for the chart
+  const spendDataMap = bookings.reduce((acc, b) => {
+    if (b.status === 'completed' || b.status === 'paid') {
+      const date = new Date(b.created_at)
+      const monthStr = date.toLocaleString('default', { month: 'short' })
+      acc[monthStr] = (acc[monthStr] || 0) + (b.total_amount || b.service_packages?.base_price || 0)
+    }
+    return acc
+  }, {})
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const SPEND_DATA = months.slice(0, new Date().getMonth() + 1).map(month => ({
+    month,
+    amount: spendDataMap[month] || 0
+  }))
+
+  const recentBookings = bookings.slice(0, 5).map(b => ({
+    service: b.service_packages?.name || 'Standard Service',
+    date: new Date(b.created_at).toLocaleDateString(),
+    status: b.status,
+    amount: `₹${b.total_amount || b.service_packages?.base_price || 0}`,
+    mechanic: b.mechanics?.profiles?.full_name || 'Unassigned',
+    vehicle: b.vehicles ? `${b.vehicles.brand} ${b.vehicles.model}` : 'Unknown'
+  }))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -49,9 +73,9 @@ export default function CustomerDashboard() {
       {/* Stats */}
       <div className="grid-4">
         {[
-          { icon: Calendar, label: 'Total Bookings', value: '12', color: 'var(--primary)' },
-          { icon: CheckCircle, label: 'Completed', value: '10', color: '#10B981' },
-          { icon: TrendingUp, label: 'Total Spent', value: '₹9,840', color: '#3B82F6' },
+          { icon: Calendar, label: 'Total Bookings', value: totalBookings, color: 'var(--primary)' },
+          { icon: CheckCircle, label: 'Completed', value: completedBookings, color: '#10B981' },
+          { icon: TrendingUp, label: 'Total Spent', value: `₹${totalSpent.toLocaleString()}`, color: '#3B82F6' },
           { icon: Star, label: 'Avg Rating Given', value: '4.8', color: '#F59E0B' },
         ].map(s => (
           <div key={s.label} className="stat-card">
@@ -82,7 +106,7 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Spend chart + Recent bookings */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
         <div className="card">
           <h2 style={{ fontFamily: 'Poppins', fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Monthly Spend</h2>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Your service expenses this year</p>
@@ -109,11 +133,13 @@ export default function CustomerDashboard() {
             <Link to="/customer/bookings" style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>See all →</Link>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {RECENT.map((r, i) => (
+            {recentBookings.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>No recent services found.</div>
+            ) : recentBookings.map((r, i) => (
               <div key={i} style={{ padding: '14px 16px', background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
                 <div className="flex-between" style={{ marginBottom: 6 }}>
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{r.service}</span>
-                  <span className="badge badge-success">{r.status}</span>
+                  <span className={`badge ${r.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>{r.status}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.vehicle} • {r.mechanic}</div>
                 <div className="flex-between" style={{ marginTop: 8 }}>
@@ -128,3 +154,4 @@ export default function CustomerDashboard() {
     </div>
   )
 }
+
