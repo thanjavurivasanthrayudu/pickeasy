@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { useAllProfiles } from '../../hooks/useSupabase'
 import { supabase } from '../../services/supabase'
+import toast from 'react-hot-toast'
 
 export default function CustomerManagement() {
   const [search, setSearch] = useState('')
-  const { data: profiles = [], loading } = useAllProfiles()
+  const { data: profiles = [], loading, refetch } = useAllProfiles()
 
   const customers = profiles
     .filter(p => p.role === 'customer')
@@ -69,13 +70,13 @@ export default function CustomerManagement() {
                       {c.status !== 'active' && (
                         <button onClick={async () => {
                           const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', c.id)
-                          if (!error) window.location.reload()
+                          if (!error) { toast.success('Activated'); refetch() } else { toast.error(error.message) }
                         }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Activate</button>
                       )}
                       {c.status !== 'suspended' && (
                         <button onClick={async () => {
                           const { error } = await supabase.from('profiles').update({ status: 'suspended' }).eq('id', c.id)
-                          if (!error) window.location.reload()
+                          if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
                         }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Suspend</button>
                       )}
                     </td>

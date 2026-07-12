@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useAllBookings, useAllProfiles } from '../../hooks/useSupabase'
 import { supabase } from '../../services/supabase'
+import toast from 'react-hot-toast'
 
 function StatCard({ icon: Icon, label, value, change, changeDir, color }) {
     return (
@@ -45,7 +46,7 @@ function SectionHeader({ title, icon: Icon }) {
 
 export default function AdminDashboard() {
     const { data: bookings = [] } = useAllBookings()
-    const { data: profiles = [] } = useAllProfiles()
+    const { data: profiles = [], refetch } = useAllProfiles()
     const navigate = useNavigate()
 
     const today = new Date()
@@ -120,24 +121,24 @@ export default function AdminDashboard() {
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         {m.status !== 'active' && (
                                             <button onClick={async () => {
-                                                await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
-                                                window.location.reload()
+                                                const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
+                                                if (!error) { toast.success('Approved'); refetch() } else { toast.error(error.message) }
                                             }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Approve">
                                                 Approve
                                             </button>
                                         )}
                                         {m.status !== 'rejected' && m.status === 'pending' && (
                                             <button onClick={async () => {
-                                                await supabase.from('profiles').update({ status: 'rejected' }).eq('id', m.id)
-                                                window.location.reload()
+                                                const { error } = await supabase.from('profiles').update({ status: 'rejected' }).eq('id', m.id)
+                                                if (!error) { toast.success('Rejected'); refetch() } else { toast.error(error.message) }
                                             }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(225, 29, 46, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Reject">
                                                 Reject
                                             </button>
                                         )}
                                         {m.status !== 'suspended' && m.status !== 'pending' && (
                                             <button onClick={async () => {
-                                                await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
-                                                window.location.reload()
+                                                const { error } = await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
+                                                if (!error) { toast.success('Suspended'); refetch() } else { toast.error(error.message) }
                                             }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Suspend">
                                                 Suspend
                                             </button>
