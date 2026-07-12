@@ -39,7 +39,7 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div style={{ width: '100%', marginBottom: 40 }}>
                     <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+                        <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
                     </Link>
                 </div>
 

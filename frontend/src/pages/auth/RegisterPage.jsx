@@ -35,7 +35,7 @@ export default function RegisterPage() {
 
         try {
             await authRegister({ ...data, role })
-            toast.success('Account created! Welcome to EASY RIDE 🎉')
+            toast.success('Account created! Welcome to RIDE EASYY 🎉')
             if (role === 'admin') navigate('/admin')
             else if (role === 'mechanic') navigate('/mechanic')
             else navigate('/customer')
@@ -62,11 +62,11 @@ export default function RegisterPage() {
             }}>
                 {/* Logo */}
                 <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-                    <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+                    <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
                 </Link>
 
                 <h1 style={{ fontFamily: 'Poppins', fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Create Account</h1>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 14 }}>Join thousands of riders and mechanics on EASY RIDE.</p>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 14 }}>Join thousands of riders and mechanics on RIDE EASYY.</p>
 
                 {/* Role Toggle */}
                 <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
@@ -242,20 +242,20 @@ export default function RegisterPage() {
                         <div style={{ overflowY: 'auto', paddingRight: 8, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
                             {activeModal === 'terms' ? (
                                 <>
-                                    <p style={{ marginBottom: 12 }}>Welcome to <strong>EASY RIDE</strong>. By accessing or using our platform, you agree to comply with and be bound by the following Terms of Service.</p>
+                                    <p style={{ marginBottom: 12 }}>Welcome to <strong>RIDE EASYY</strong>. By accessing or using our platform, you agree to comply with and be bound by the following Terms of Service.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>1. Services Provided</h4>
-                                    <p style={{ marginBottom: 12 }}>EASY RIDE connects customers with qualified mechanics to perform doorstep bike inspections, services, and repairs. Bookings are subject to mechanic availability and schedule confirmation.</p>
+                                    <p style={{ marginBottom: 12 }}>RIDE EASYY connects customers with qualified mechanics to perform doorstep bike inspections, services, and repairs. Bookings are subject to mechanic availability and schedule confirmation.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>2. Payments and Pricing</h4>
                                     <p style={{ marginBottom: 12 }}>Prices are transparently communicated prior to service booking. Payment must be settled upon completion of service using our approved digital channels or cash payment options.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>3. User Account and Security</h4>
                                     <p style={{ marginBottom: 12 }}>You are responsible for maintaining the confidentiality of your credentials. You agree to provide accurate information upon signup and immediately notify us of any security breach.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>4. Liability Limitations</h4>
-                                    <p style={{ marginBottom: 12 }}>EASY RIDE is not liable for indirect, incidental, or consequential damages resulting from doorstep services. We verify mechanics qualifications but advise regular diagnostic verification.</p>
+                                    <p style={{ marginBottom: 12 }}>RIDE EASYY is not liable for indirect, incidental, or consequential damages resulting from doorstep services. We verify mechanics qualifications but advise regular diagnostic verification.</p>
                                     <br />
                                 </>
                             ) : (
                                 <>
-                                    <p style={{ marginBottom: 12 }}>At <strong>EASY RIDE</strong>, we respect your privacy and are committed to protecting the personal data you share with us. This policy details how we collect, store, and use your information.</p>
+                                    <p style={{ marginBottom: 12 }}>At <strong>RIDE EASYY</strong>, we respect your privacy and are committed to protecting the personal data you share with us. This policy details how we collect, store, and use your information.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>1. Information Collection</h4>
                                     <p style={{ marginBottom: 12 }}>We collect your personal details (such as your full name, email address, phone number, and location coordinates) to accurately assign mechanics and process your requests.</p>
                                     <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: 16, marginBottom: 8 }}>2. How We Use Data</h4>

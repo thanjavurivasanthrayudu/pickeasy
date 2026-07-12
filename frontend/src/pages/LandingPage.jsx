@@ -35,7 +35,7 @@ const STATS = [
 
 const TESTIMONIALS = [
     { name: 'Arjun Sharma', city: 'Mumbai', rating: 5, text: 'Got my Pulsar serviced at home. The mechanic was on time, professional, and the job was perfect!' },
-    { name: 'Priya Nair', city: 'Bengaluru', rating: 5, text: 'EASY RIDE is a lifesaver. No more waiting at workshops. Booked at 9am, done by 11am!' },
+    { name: 'Priya Nair', city: 'Bengaluru', rating: 5, text: 'RIDE EASYY is a lifesaver. No more waiting at workshops. Booked at 9am, done by 11am!' },
     { name: 'Karthik R.', city: 'Chennai', rating: 5, text: 'Transparent pricing, genuine parts, excellent service. Used 3 times now, never disappointed.' },
 ]
 
@@ -83,7 +83,7 @@ export default function LandingPage() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
                     <Link to="/" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+                        <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
                     </Link>
                 </div>
 
@@ -308,7 +308,7 @@ export default function LandingPage() {
                         Ready to Book Your<br /><span style={{ color: 'var(--primary)' }}>First Service?</span>
                     </h2>
                     <p style={{ color: 'rgba(255,255,255,0.65)', marginBottom: 40, fontSize: 17, lineHeight: 1.7 }}>
-                        Join 50,000+ satisfied riders who trust EASY RIDE for hassle-free doorstep bike servicing.
+                        Join 50,000+ satisfied riders who trust RIDE EASYY for hassle-free doorstep bike servicing.
                     </p>
                     <Link to="/register" className="btn btn-primary btn-lg">
                         Book Now — Free Inspection <ArrowRight size={18} />
@@ -322,7 +322,7 @@ export default function LandingPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 48 }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                                <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
+                                <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                             </div>
                             <p style={{ fontSize: 14, lineHeight: 1.7 }}>Professional doorstep bike service, simplified.</p>
                         </div>
@@ -348,7 +348,7 @@ export default function LandingPage() {
                     </div>
 
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                        <span style={{ fontSize: 13 }}>© 2026 EASY RIDE. All rights reserved.</span>
+                        <span style={{ fontSize: 13 }}>© 2026 RIDE EASYY. All rights reserved.</span>
                         <div style={{ display: 'flex', gap: 16 }}>
                             {[Phone, Mail, Globe, AtSign, Send].map((Icon, i) => (
                                 <div key={i} style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }}

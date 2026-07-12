@@ -157,7 +157,7 @@ export default function SetupPage() {
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <div style={{ fontSize: 48, marginBottom: 12 }}>🔧</div>
                     <h1 style={{ fontFamily: 'Poppins, sans-serif', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
-                        EASY RIDE — Setup
+                        RIDE EASYY — Setup
                     </h1>
                     <p style={{ color: '#64748b', marginTop: 8 }}>Database connectivity checker & fix guide</p>
                 </div>

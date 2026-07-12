@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%)', padding: '40px 16px' }}>
             <div style={{ background: 'white', borderRadius: 32, padding: '48px 40px', width: '100%', maxWidth: 460, boxShadow: 'var(--shadow-xl)' }}>
                 <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-                    <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+                    <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
                 </Link>
 
                 <h1 style={{ fontFamily: 'Poppins', fontSize: 26, fontWeight: 800, marginBottom: 8 }}>

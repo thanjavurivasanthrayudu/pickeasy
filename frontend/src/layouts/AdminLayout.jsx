@@ -40,7 +40,7 @@ export default function AdminLayout() {
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-logo">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
+                        <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                         <div>
                             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>Admin Panel</div>
                         </div>

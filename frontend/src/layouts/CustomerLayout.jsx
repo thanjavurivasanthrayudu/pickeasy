@@ -36,7 +36,7 @@ function Sidebar({ open, onClose }) {
                 <div className="sidebar-logo">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <img src="/logo.png" alt="EASY RIDE Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
+                            <img src="/logo.png" alt="RIDE EASYY Logo" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', padding: '4px', borderRadius: '4px' }} />
                         </div>
                         <button onClick={onClose} className="lg:hidden" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
                             <X size={20} />
