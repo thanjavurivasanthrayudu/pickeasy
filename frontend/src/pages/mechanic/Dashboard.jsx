@@ -1,13 +1,29 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import { Trophy, Star, TrendingUp, CheckCircle, Award } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useMechanicRecord, useMechanicJobs } from '../../hooks/useSupabase'
+import { useMechanicRecord, useMechanicJobs, useAvailableJobs } from '../../hooks/useSupabase'
+import { supabase } from '../../services/supabase'
+import toast from 'react-hot-toast'
 
 export default function MechanicDashboard() {
   const { user } = useAuth()
   const { data: mechanicRecord } = useMechanicRecord(user?.id)
-  const { data: jobsData } = useMechanicJobs(mechanicRecord?.id)
+  const { data: jobsData, refetch } = useMechanicJobs(mechanicRecord?.id)
   const jobs = jobsData || []
+  const { data: openJobsData, refetch: refetchOpenJobs } = useAvailableJobs()
+  const openJobs = openJobsData || []
+
+  const handleClaimJob = async (jobId) => {
+    if (!mechanicRecord?.id) return
+    const { error } = await supabase.from('bookings').update({ mechanic_id: mechanicRecord.id, status: 'mechanic_assigned' }).eq('id', jobId)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Job Claimed Successfully! 🎉')
+      refetch()
+      refetchOpenJobs()
+    }
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -150,6 +166,34 @@ export default function MechanicDashboard() {
                 <td style={{ color: 'var(--text-secondary)' }}>{j.service}</td>
                 <td><span className={`badge ${j.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>{j.status.replace('_', ' ')}</span></td>
                 <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{j.earned}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Available Pool of Jobs */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginTop: 12 }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)' }}>
+          <h2 style={{ fontFamily: 'Poppins', fontSize: 16, fontWeight: 700 }}>🚀 Open Jobs Available to Claim</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>Pending jobs in your area waiting for a mechanic.</p>
+        </div>
+        <table className="data-table">
+          <thead>
+            <tr><th>Customer</th><th>Vehicle</th><th>Service</th><th>Listed</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {openJobs.length === 0 ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)' }}>No unassigned jobs right now. You are all caught up!</td></tr>
+            ) : openJobs.map((j, i) => (
+              <tr key={i}>
+                <td style={{ fontWeight: 600 }}>{j.customers?.profiles?.full_name || 'Walk-in'}</td>
+                <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{j.vehicles ? `${j.vehicles.brand} ${j.vehicles.model}` : 'Unknown'}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{j.service_packages?.name || 'Standard Service'}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{new Date(j.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td>
+                  <button onClick={() => handleClaimJob(j.id)} className="btn btn-sm" style={{ padding: '6px 14px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}>Claim Job</button>
+                </td>
               </tr>
             ))}
           </tbody>

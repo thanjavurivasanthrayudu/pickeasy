@@ -119,6 +119,24 @@ export function useMechanicJobs(mechanicId) {
     }, [mechanicId])
 }
 
+export function useAvailableJobs() {
+    return useSupabaseQuery(async () => {
+        const { data, error } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                vehicles(brand, model, vehicle_type),
+                customers(user_id, profiles(full_name)),
+                service_packages(name, base_price)
+            `)
+            .is('mechanic_id', null)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+        if (error) throw error
+        return data || []
+    }, [])
+}
+
 // ── Service categories ────────────────────────────────────
 export function useServiceCategories() {
     return useSupabaseQuery(async () => {

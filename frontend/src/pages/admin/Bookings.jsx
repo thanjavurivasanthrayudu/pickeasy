@@ -1,11 +1,27 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { useAllBookings } from '../../hooks/useSupabase'
+import { useAllBookings, useAllProfiles } from '../../hooks/useSupabase'
+import { supabase } from '../../services/supabase'
+import toast from 'react-hot-toast'
 
 export default function AllBookings() {
   const [search, setSearch] = useState('')
-  const { data: bookingsData, loading } = useAllBookings()
+  const { data: bookingsData, loading, refetch } = useAllBookings()
   const bookings = bookingsData || []
+
+  const { data: profilesData } = useAllProfiles()
+  const mechanics = (profilesData || []).filter(p => p.role === 'mechanic' && p.is_active && p.mechanic?.is_approved)
+
+  const handleAssignMechanic = async (bookingId, mechanicId) => {
+    if (!mechanicId) return
+    const { error } = await supabase.from('bookings').update({ mechanic_id: mechanicId, status: 'mechanic_assigned' }).eq('id', bookingId)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Mechanic assigned successfully!')
+      refetch()
+    }
+  }
 
   const filteredBookings = bookings.filter(b =>
     b.id?.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,7 +79,22 @@ export default function AllBookings() {
                     <td style={{ padding: '16px 24px', fontWeight: 600 }}>{b.customers?.profiles?.full_name || 'N/A'}</td>
                     <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{b.vehicles ? `${b.vehicles.brand} ${b.vehicles.model}` : 'N/A'}</td>
                     <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{b.service_packages?.name || 'N/A'}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{b.mechanics?.profiles?.full_name || 'Unassigned'}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>
+                      {b.mechanics?.profiles?.full_name ? (
+                        b.mechanics.profiles.full_name
+                      ) : (
+                        <select
+                          style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-primary)', outline: 'none' }}
+                          onChange={(e) => handleAssignMechanic(b.id, e.target.value)}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Assign Mechanic</option>
+                          {mechanics.map(m => (
+                            <option key={m.mechanic.id} value={m.mechanic.id}>{m.full_name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
                     <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{new Date(b.created_at).toLocaleDateString()}</td>
                     <td style={{ padding: '16px 24px' }}>
                       <span className={`badge ${b.status === 'completed' ? 'badge-success' : b.status === 'pending' ? 'badge-warning' : 'badge-info'}`}>
