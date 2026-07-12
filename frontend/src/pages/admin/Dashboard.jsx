@@ -118,18 +118,30 @@ export default function AdminDashboard() {
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', gap: 8 }}>
-                                        <button className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Approve">
-                                            Approve
-                                        </button>
-                                        <button className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(225, 29, 46, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Reject">
-                                            Reject
-                                        </button>
-                                        <button className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Suspend">
-                                            Suspend
-                                        </button>
-                                        <button className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Activate">
-                                            Activate
-                                        </button>
+                                        {m.status !== 'active' && (
+                                            <button onClick={async () => {
+                                                await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
+                                                window.location.reload()
+                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Approve">
+                                                Approve
+                                            </button>
+                                        )}
+                                        {m.status !== 'rejected' && m.status === 'pending' && (
+                                            <button onClick={async () => {
+                                                await supabase.from('profiles').update({ status: 'rejected' }).eq('id', m.id)
+                                                window.location.reload()
+                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(225, 29, 46, 0.1)', color: 'var(--danger)', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Reject">
+                                                Reject
+                                            </button>
+                                        )}
+                                        {m.status !== 'suspended' && m.status !== 'pending' && (
+                                            <button onClick={async () => {
+                                                await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
+                                                window.location.reload()
+                                            }} className="btn btn-sm" style={{ padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: 'none', borderRadius: 6, fontWeight: 700 }} title="Suspend">
+                                                Suspend
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>

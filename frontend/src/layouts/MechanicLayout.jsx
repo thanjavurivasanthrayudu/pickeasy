@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import toast from 'react-hot-toast'
-import { mechanicAPI } from '../services/api'
+import { supabase } from '../services/supabase'
 
 const NAV = [
     { to: '/mechanic', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -29,10 +29,19 @@ export default function MechanicLayout() {
 
     const toggleAvailability = async () => {
         try {
-            await mechanicAPI.toggleAvailability()
+            const { error } = await supabase
+                .from('mechanics')
+                .update({ is_available: !available })
+                .eq('user_id', user.id)
+
+            if (error) throw error
+
             setAvailable(v => !v)
             toast.success(available ? 'You are now offline' : 'You are now online and accepting jobs!')
-        } catch { toast.error('Failed to update availability') }
+        } catch (err) {
+            console.error(err)
+            toast.error('Failed to update availability')
+        }
     }
 
     return (

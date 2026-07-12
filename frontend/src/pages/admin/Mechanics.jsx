@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { useAllProfiles } from '../../hooks/useSupabase'
+import { supabase } from '../../services/supabase'
 
 export default function MechanicManagement() {
   const [search, setSearch] = useState('')
@@ -42,6 +43,7 @@ export default function MechanicManagement() {
                 <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Phone</th>
                 <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Joined</th>
                 <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '16px 24px', color: 'var(--text-muted)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +64,20 @@ export default function MechanicManagement() {
                       <span className={`badge ${m.status === 'suspended' ? 'badge-danger' : m.status === 'pending' ? 'badge-warning' : 'badge-success'}`}>
                         {m.status || 'Active'}
                       </span>
+                    </td>
+                    <td style={{ padding: '16px 24px', display: 'flex', gap: 8 }}>
+                      {m.status !== 'active' && (
+                        <button onClick={async () => {
+                          const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', m.id)
+                          if (!error) window.location.reload()
+                        }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Approve</button>
+                      )}
+                      {m.status !== 'suspended' && (
+                        <button onClick={async () => {
+                          const { error } = await supabase.from('profiles').update({ status: 'suspended' }).eq('id', m.id)
+                          if (!error) window.location.reload()
+                        }} className="btn btn-sm" style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Suspend</button>
+                      )}
                     </td>
                   </tr>
                 ))
