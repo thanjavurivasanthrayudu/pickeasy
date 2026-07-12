@@ -4,7 +4,8 @@ import { useAllBookings } from '../../hooks/useSupabase'
 
 export default function AllBookings() {
   const [search, setSearch] = useState('')
-  const { data: bookings = [], loading } = useAllBookings()
+  const { data: bookingsData, loading } = useAllBookings()
+  const bookings = bookingsData || []
 
   const filteredBookings = bookings.filter(b =>
     b.id?.toLowerCase().includes(search.toLowerCase()) ||

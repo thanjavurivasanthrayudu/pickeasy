@@ -6,7 +6,8 @@ import toast from 'react-hot-toast'
 
 export default function CustomerManagement() {
   const [search, setSearch] = useState('')
-  const { data: profiles = [], loading, refetch } = useAllProfiles()
+  const { data: profilesData, loading, refetch } = useAllProfiles()
+  const profiles = profilesData || []
 
   const customers = profiles
     .filter(p => p.role === 'customer')

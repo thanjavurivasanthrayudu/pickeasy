@@ -45,8 +45,11 @@ function SectionHeader({ title, icon: Icon }) {
 }
 
 export default function AdminDashboard() {
-    const { data: bookings = [] } = useAllBookings()
-    const { data: profiles = [], refetch } = useAllProfiles()
+    const { data: bookingsData } = useAllBookings()
+    const { data: profilesData, refetch } = useAllProfiles()
+
+    const bookings = bookingsData || []
+    const profiles = profilesData || []
     const navigate = useNavigate()
 
     const today = new Date()
