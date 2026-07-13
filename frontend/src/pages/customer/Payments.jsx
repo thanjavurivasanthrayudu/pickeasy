@@ -33,7 +33,8 @@ export default function CustomerPayments() {
 
     const filtered = payments.filter(p =>
         (p.razorpay_payment_id || '').toLowerCase().includes(search.toLowerCase()) ||
-        (p.bookings?.booking_number || '').toLowerCase().includes(search.toLowerCase())
+        (p.bookings?.booking_number || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.method || '').toLowerCase().includes(search.toLowerCase())
     )
 
     return (
@@ -74,7 +75,7 @@ export default function CustomerPayments() {
                                 <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Transaction ID</th>
                                 <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Booking</th>
                                 <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Amount</th>
-                                <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Method</th>
+                                <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Payment Method</th>
                                 <th style={{ padding: 16, textAlign: 'left', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Status</th>
                                 <th style={{ padding: 16, textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Date</th>
                             </tr>
@@ -89,7 +90,9 @@ export default function CustomerPayments() {
                                         </Link>
                                     </td>
                                     <td style={{ padding: 16, fontSize: 14, fontWeight: 700 }}>₹{p.amount}</td>
-                                    <td style={{ padding: 16, fontSize: 14, textTransform: 'capitalize' }}>{p.method}</td>
+                                    <td style={{ padding: 16, fontSize: 14, textTransform: 'capitalize' }}>
+                                        {p.method || 'N/A'}
+                                    </td>
                                     <td style={{ padding: 16 }}>
                                         {p.status === 'completed' || p.status === 'success' ? (
                                             <span className="badge badge-success" style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>

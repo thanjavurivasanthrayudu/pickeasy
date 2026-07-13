@@ -1,0 +1,150 @@
+﻿
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v8.1.3 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...Γ£ô 2479 modules transformed.
+node.exe : [31mΓ£ù[39m Build failed in 1.07s
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          : NotSpecified: ([31mΓ£ù[39m Build fa 
+   iled in 1.07s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31merror during build:
+[31mBuild failed with 4 errors:
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve 
+'../../../services/supabase' in src/pages/customer/BookingDetail.jsx
+   [38;5;246mΓò¡[0m[38;5;246mΓöÇ[0m[38;5;246m[[0m 
+src/pages/customer/BookingDetail.jsx:4:26 [38;5;246m][0m
+   [38;5;246mΓöé[0m
+ [38;5;246m4 Γöé[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[
+0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mu[0m
+[38;5;249mp[0m[38;5;249ma[0m[38;5;249mb[0m[38;5;249ma[0m[38
+;5;249ms[0m[38;5;249me[0m[38;5;249m 
+[0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m
+[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../../services/supabase"[38;5;249m;[0m
+ [38;5;240m  Γöé[0m                          ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+ [38;5;240m  Γöé[0m                                        
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ Module not found.
+ [38;5;240m  Γöé[0m 
+ [38;5;240m  Γöé[0m [38;5;115mHelp[0m: 
+'src/pages/customer/BookingDetail.jsx' is imported by the following 
+path:
+ [38;5;240m  Γöé[0m         - src/pages/customer/BookingDetail.jsx
+ [38;5;240m  Γöé[0m         - src/App.jsx
+ [38;5;240m  Γöé[0m         - src/main.jsx
+ [38;5;240m  Γöé[0m         - index.html
+[38;5;246mΓöÇΓöÇΓöÇΓò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve 
+'../../../contexts/AuthContext' in 
+src/pages/customer/BookingDetail.jsx
+   [38;5;246mΓò¡[0m[38;5;246mΓöÇ[0m[38;5;246m[[0m 
+src/pages/customer/BookingDetail.jsx:5:25 [38;5;246m][0m
+   [38;5;246mΓöé[0m
+ [38;5;246m5 Γöé[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[
+0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mu[0m[38;5;249ms[0m
+[38;5;249me[0m[38;5;249mA[0m[38;5;249mu[0m[38;5;249mt[0m[38
+;5;249mh[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m [0m[38;5;2
+49mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../../contexts/AuthContext"[38;5;249m;[0m
+ [38;5;240m  Γöé[0m                         ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇ  
+ [38;5;240m  Γöé[0m                                        
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ Module not 
+found.
+ [38;5;240m  Γöé[0m 
+ [38;5;240m  Γöé[0m [38;5;115mHelp[0m: 
+'src/pages/customer/BookingDetail.jsx' is imported by the following 
+path:
+ [38;5;240m  Γöé[0m         - src/pages/customer/BookingDetail.jsx
+ [38;5;240m  Γöé[0m         - src/App.jsx
+ [38;5;240m  Γöé[0m         - src/main.jsx
+ [38;5;240m  Γöé[0m         - index.html
+[38;5;246mΓöÇΓöÇΓöÇΓò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve 
+'../../../services/supabase' in src/pages/customer/Invoices.jsx
+   [38;5;246mΓò¡[0m[38;5;246mΓöÇ[0m[38;5;246m[[0m 
+src/pages/customer/Invoices.jsx:3:26 [38;5;246m][0m
+   [38;5;246mΓöé[0m
+ [38;5;246m3 Γöé[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[
+0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mu[0m
+[38;5;249mp[0m[38;5;249ma[0m[38;5;249mb[0m[38;5;249ma[0m[38
+;5;249ms[0m[38;5;249me[0m[38;5;249m 
+[0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m
+[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../../services/supabase"[38;5;249m;[0m
+ [38;5;240m  Γöé[0m                          ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+ [38;5;240m  Γöé[0m                                        
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ Module not found.
+ [38;5;240m  Γöé[0m 
+ [38;5;240m  Γöé[0m [38;5;115mHelp[0m: 
+'src/pages/customer/Invoices.jsx' is imported by the following path:
+ [38;5;240m  Γöé[0m         - src/pages/customer/Invoices.jsx
+ [38;5;240m  Γöé[0m         - src/App.jsx
+ [38;5;240m  Γöé[0m         - src/main.jsx
+ [38;5;240m  Γöé[0m         - index.html
+[38;5;246mΓöÇΓöÇΓöÇΓò»[0m
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve 
+'../../../contexts/AuthContext' in src/pages/customer/Invoices.jsx
+   [38;5;246mΓò¡[0m[38;5;246mΓöÇ[0m[38;5;246m[[0m 
+src/pages/customer/Invoices.jsx:4:25 [38;5;246m][0m
+   [38;5;246mΓöé[0m
+ [38;5;246m4 Γöé[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[
+0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m 
+[0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mu[0m[38;5;249ms[0m
+[38;5;249me[0m[38;5;249mA[0m[38;5;249mu[0m[38;5;249mt[0m[38
+;5;249mh[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m [0m[38;5;2
+49mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m 
+[0m"../../../contexts/AuthContext"[38;5;249m;[0m
+ [38;5;240m  Γöé[0m                         ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇ  
+ [38;5;240m  Γöé[0m                                        
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ Module not 
+found.
+ [38;5;240m  Γöé[0m 
+ [38;5;240m  Γöé[0m [38;5;115mHelp[0m: 
+'src/pages/customer/Invoices.jsx' is imported by the following path:
+ [38;5;240m  Γöé[0m         - src/pages/customer/Invoices.jsx
+ [38;5;240m  Γöé[0m         - src/App.jsx
+ [38;5;240m  Γöé[0m         - src/main.jsx
+ [38;5;240m  Γöé[0m         - index.html
+[38;5;246mΓöÇΓöÇΓöÇΓò»[0m
+[31m
+    at aggregateBindingErrorsIntoJsError (file:///C:/Users/vasan/One
+Drive/Videos/pickeasy/frontend/node_modules/rolldown/dist/shared/err
+or-BlQ0-ek7.mjs:48:18)
+    at unwrapBindingResult (file:///C:/Users/vasan/OneDrive/Videos/p
+ickeasy/frontend/node_modules/rolldown/dist/shared/error-BlQ0-ek7.mj
+s:18:128)
+    at #build (file:///C:/Users/vasan/OneDrive/Videos/pickeasy/front
+end/node_modules/rolldown/dist/shared/rolldown-build-aV0QeeTW.mjs:32
+56:34)
+    at async buildEnvironment (file:///C:/Users/vasan/OneDrive/Video
+s/pickeasy/frontend/node_modules/vite/dist/node/chunks/node.js:32622
+:66)
+    at async Object.build (file:///C:/Users/vasan/OneDrive/Videos/pi
+ckeasy/frontend/node_modules/vite/dist/node/chunks/node.js:33044:19)
+    at async Object.buildApp (file:///C:/Users/vasan/OneDrive/Videos
+/pickeasy/frontend/node_modules/vite/dist/node/chunks/node.js:33041:
+153)
+    at async CAC.<anonymous> (file:///C:/Users/vasan/OneDrive/Videos
+/pickeasy/frontend/node_modules/vite/dist/node/cli.js:777:3) {
+  errors: [Getter/Setter]
+}[39m
