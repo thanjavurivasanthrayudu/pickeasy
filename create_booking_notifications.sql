@@ -1,7 +1,7 @@
 -- Trigger to auto-generate notifications on new bookings
 
 CREATE OR REPLACE FUNCTION notify_on_new_booking()
-RETURNS TRIGGER AS c:\Users\vasan\OneDrive\Videos\pickeasy
+RETURNS TRIGGER AS $$
 DECLARE
     admin_record RECORD;
     mechanic_record RECORD;
@@ -48,14 +48,13 @@ BEGIN
 
     RETURN NEW;
 END;
-c:\Users\vasan\OneDrive\Videos\pickeasy LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_notify_on_new_booking ON bookings;
 CREATE TRIGGER trg_notify_on_new_booking
     AFTER INSERT ON bookings
     FOR EACH ROW
     EXECUTE FUNCTION notify_on_new_booking();
-
 
 -- Ensure realtime is enabled for the notifications table
 alter publication supabase_realtime add table notifications;
