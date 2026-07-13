@@ -2,11 +2,12 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useState } from 'react'
 import {
     LayoutDashboard, Calendar, Car, FileText, Star,
-    User, Bell, Wrench, LogOut, Menu, X, Sun, Moon, Plus
+    User, LogOut, Menu, X, Sun, Moon, Plus
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import toast from 'react-hot-toast'
+import NotificationsDropdown from '../components/NotificationsDropdown'
 
 const NAV = [
     { to: '/customer', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -116,14 +117,7 @@ export default function CustomerLayout() {
                         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                     </button>
 
-                    <button className="btn btn-icon btn-ghost" id="notifications-btn" style={{ position: 'relative' }}>
-                        <Bell size={18} />
-                        <span style={{
-                            position: 'absolute', top: 6, right: 6,
-                            width: 8, height: 8, background: 'var(--primary)',
-                            borderRadius: '50%', border: '2px solid var(--bg)',
-                        }} />
-                    </button>
+                    <NotificationsDropdown />
                 </header>
 
                 {/* Page content */}
