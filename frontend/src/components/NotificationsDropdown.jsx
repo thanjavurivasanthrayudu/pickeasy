@@ -16,8 +16,8 @@ export default function NotificationsDropdown() {
                 setOpen(false)
             }
         }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
+        document.addEventListener('click', handleClickOutside, true)
+        return () => document.removeEventListener('click', handleClickOutside, true)
     }, [])
 
     const unreadCount = (notifications || []).filter(n => !n.is_read).length || 0
@@ -49,14 +49,14 @@ export default function NotificationsDropdown() {
                 id="notifications-btn"
                 style={{ position: 'relative' }}
             >
-                <Bell size={18} />
+                <Bell size={18} style={{ pointerEvents: 'none' }} />
                 {unreadCount > 0 && (
                     <span style={{
                         position: 'absolute', top: 4, right: 4,
                         width: 14, height: 14, background: 'var(--primary)',
                         borderRadius: '50%', border: '2px solid var(--bg)',
                         color: '#000', fontSize: 9, fontWeight: 'bold',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none'
                     }}>
                         {unreadCount}
                     </span>
@@ -68,7 +68,7 @@ export default function NotificationsDropdown() {
                     position: 'absolute', top: '100%', right: 0, marginTop: 8,
                     width: 320, background: 'var(--bg)', border: '1px solid var(--border)',
                     borderRadius: 'var(--radius-md)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 100, maxHeight: 400, overflowY: 'auto'
+                    zIndex: 9999, maxHeight: 400, overflowY: 'auto'
                 }}>
                     <div style={{
                         padding: '12px 16px', borderBottom: '1px solid var(--border)',
