@@ -152,7 +152,7 @@ export function useServiceCategories() {
 
 // ── Notifications ─────────────────────────────────────────
 export function useNotifications(userId) {
-    return useSupabaseQuery(async () => {
+    const { data, loading, error, refetch } = useSupabaseQuery(async () => {
         if (!userId) return []
         const { data, error } = await supabase
             .from('notifications')
@@ -163,6 +163,26 @@ export function useNotifications(userId) {
         if (error) throw error
         return data || []
     }, [userId])
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase.channel(`notifications-${userId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+                () => {
+                    refetch();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        }
+    }, [userId, refetch]);
+
+    return { data, loading, error, refetch };
 }
 
 // ── Admin: All users ─────────────────────────────────────
