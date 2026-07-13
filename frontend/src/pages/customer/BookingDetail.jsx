@@ -48,8 +48,16 @@ export default function BookingDetails() {
       name: "RIDE EASYY",
       description: "Service Payment",
       handler: async function (response) {
-        // On success, update booking status to completed (or whatever the flow is)
         toast.success(`Payment successful! ID: ${response.razorpay_payment_id}`)
+
+        // Save transaction to payments table
+        await supabase.from('payments').insert({
+          booking_id: booking.id,
+          customer_id: booking.customer_id,
+          amount: booking.total_amount,
+          razorpay_payment_id: response.razorpay_payment_id,
+          status: 'success'
+        });
 
         // Update booking status
         await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id)

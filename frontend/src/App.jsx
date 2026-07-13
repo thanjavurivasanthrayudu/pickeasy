@@ -18,6 +18,7 @@ import BookingDetail from './pages/customer/BookingDetail'
 import CustomerProfile from './pages/customer/Profile'
 import CustomerVehicles from './pages/customer/Vehicles'
 import CustomerInvoices from './pages/customer/Invoices'
+import CustomerPayments from './pages/customer/Payments'
 import CustomerReviews from './pages/customer/Reviews'
 
 // Mechanic pages
@@ -93,6 +94,7 @@ export default function App() {
                 <Route path="bookings/:id" element={<BookingDetail />} />
                 <Route path="vehicles" element={<CustomerVehicles />} />
                 <Route path="invoices" element={<CustomerInvoices />} />
+                <Route path="payments" element={<CustomerPayments />} />
                 <Route path="reviews" element={<CustomerReviews />} />
                 <Route path="profile" element={<CustomerProfile />} />
               </Route>

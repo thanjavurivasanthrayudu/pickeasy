@@ -14,6 +14,7 @@ const NAV = [
     { to: '/customer/bookings', label: 'My Bookings', icon: Calendar },
     { to: '/customer/vehicles', label: 'My Vehicles', icon: Car },
     { to: '/customer/invoices', label: 'Invoices', icon: FileText },
+    { to: '/customer/payments', label: 'Payments', icon: CreditCard },
     { to: '/customer/reviews', label: 'Reviews', icon: Star },
     { to: '/customer/profile', label: 'Profile', icon: User },
 ]
