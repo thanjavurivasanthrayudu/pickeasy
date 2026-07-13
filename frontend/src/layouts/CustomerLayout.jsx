@@ -2,7 +2,7 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useState } from 'react'
 import {
     LayoutDashboard, Calendar, Car, FileText, Star,
-    User, LogOut, Menu, X, Sun, Moon, Plus
+    User, LogOut, Menu, X, Sun, Moon, Plus, CreditCard
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
