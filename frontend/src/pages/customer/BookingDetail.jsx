@@ -12,10 +12,10 @@ export default function BookingDetails() {
   const [booking, setBooking] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Review state
   const [rating, setRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('razorpay')
 
   useEffect(() => {
     if (!id) return;
@@ -40,7 +40,24 @@ export default function BookingDetails() {
     fetchBooking()
   }, [id])
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
+    if (paymentMethod === 'cash' || paymentMethod === 'upi') {
+      const isCash = paymentMethod === 'cash';
+      toast.success(isCash ? 'Cash payment confirmed!' : 'UPI payment confirmed!');
+
+      await supabase.from('payments').insert({
+        booking_id: booking.id,
+        customer_id: booking.customer_id,
+        amount: booking.total_amount,
+        method: paymentMethod,
+        status: isCash ? 'pending' : 'success'
+      });
+
+      await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id);
+      setBooking({ ...booking, status: 'completed' });
+      return;
+    }
+
     const options = {
       key: "rzp_test_mock_key_here", // Enter the Key ID generated from the Dashboard
       amount: Math.round(booking.total_amount * 100).toString(), // Amount is in currency subunits. Default currency is INR.
@@ -55,6 +72,7 @@ export default function BookingDetails() {
           booking_id: booking.id,
           customer_id: booking.customer_id,
           amount: booking.total_amount,
+          method: 'razorpay',
           razorpay_payment_id: response.razorpay_payment_id,
           status: 'success'
         });
@@ -180,9 +198,40 @@ export default function BookingDetails() {
             </div>
 
             {booking.status === 'awaiting_payment' ? (
-              <button onClick={handlePayment} className="btn btn-primary" style={{ width: '100%', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={18} /> Pay via Razorpay
-              </button>
+              <div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Select Payment Method</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    {['razorpay', 'upi', 'cash'].map(method => (
+                      <button
+                        key={method}
+                        onClick={() => setPaymentMethod(method)}
+                        style={{
+                          padding: '10px 8px',
+                          border: `1.5px solid ${paymentMethod === method ? 'var(--primary)' : 'var(--border)'}`,
+                          borderRadius: 8,
+                          background: paymentMethod === method ? 'var(--primary-light)' : 'var(--bg)',
+                          color: paymentMethod === method ? 'var(--primary)' : 'var(--text-primary)',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'capitalize',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <CreditCard size={14} /> {method === 'razorpay' ? 'Card / Net' : method}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={handlePayment} className="btn btn-primary" style={{ width: '100%', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                  <CreditCard size={18} /> Pay via {paymentMethod === 'razorpay' ? 'Razorpay' : paymentMethod.toUpperCase()}
+                </button>
+              </div>
             ) : booking.status === 'completed' ? (
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: '#16a34a', fontWeight: 600, justifyContent: 'center', padding: 12, background: 'rgba(22, 163, 74, 0.1)', borderRadius: 8 }}>
                 <CheckCircle2 size={18} /> Payment Completed
