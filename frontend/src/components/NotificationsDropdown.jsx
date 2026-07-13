@@ -20,7 +20,7 @@ export default function NotificationsDropdown() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const unreadCount = notifications?.filter(n => !n.is_read).length || 0
+    const unreadCount = (notifications || []).filter(n => !n.is_read).length || 0
 
     const markAsRead = async (id) => {
         await supabase.from('notifications').update({ is_read: true }).eq('id', id)
@@ -40,7 +40,11 @@ export default function NotificationsDropdown() {
     return (
         <div ref={ref} style={{ position: 'relative' }}>
             <button
-                onClick={() => setOpen(!open)}
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation()
+                    setOpen(prev => !prev)
+                }}
                 className="btn btn-icon btn-ghost"
                 id="notifications-btn"
                 style={{ position: 'relative' }}
@@ -81,11 +85,11 @@ export default function NotificationsDropdown() {
 
                     {loading ? (
                         <div style={{ padding: 24, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
-                    ) : notifications?.length === 0 ? (
+                    ) : (!notifications || notifications.length === 0) ? (
                         <div style={{ padding: 24, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>No notifications</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {notifications?.map(n => (
+                            {notifications.map(n => (
                                 <div key={n.id} style={{
                                     padding: '12px 16px', borderBottom: '1px solid var(--border)',
                                     background: n.is_read ? 'transparent' : 'var(--primary-light)',

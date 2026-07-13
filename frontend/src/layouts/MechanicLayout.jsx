@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import toast from 'react-hot-toast'
 import { supabase } from '../services/supabase'
+import NotificationsDropdown from '../components/NotificationsDropdown'
 
 const NAV = [
     { to: '/mechanic', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -104,10 +105,7 @@ export default function MechanicLayout() {
                     </button>
                     <div style={{ flex: 1 }} />
                     <button onClick={toggle} className="btn btn-icon btn-ghost">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-                    <button className="btn btn-icon btn-ghost" style={{ position: 'relative' }}>
-                        <Bell size={18} />
-                        <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: 'var(--primary)', borderRadius: '50%', border: '2px solid var(--bg)' }} />
-                    </button>
+                    <NotificationsDropdown />
                 </header>
                 <main className="page-container page-enter">
                     <Outlet />
