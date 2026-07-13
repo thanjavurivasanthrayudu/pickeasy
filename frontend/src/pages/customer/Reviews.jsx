@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Star } from 'lucide-react'
-import { supabase } from '../../../services/supabase'
-import { useAuth } from '../../../contexts/AuthContext'
+import { supabase } from '../../services/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function CustomerReviews() {
   const { user } = useAuth()

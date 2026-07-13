@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Download, CreditCard, ChevronRight } from 'lucide-react'
-import { supabase } from '../../../services/supabase'
-import { useAuth } from '../../../contexts/AuthContext'
+import { supabase } from '../../services/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function CustomerInvoices() {

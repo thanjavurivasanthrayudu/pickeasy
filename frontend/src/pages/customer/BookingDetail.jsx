@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CreditCard, Star, FileText, CheckCircle2 } from 'lucide-react'
-import { supabase } from '../../../services/supabase'
-import { useAuth } from '../../../contexts/AuthContext'
+import { supabase } from '../../services/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 export default function BookingDetails() {
