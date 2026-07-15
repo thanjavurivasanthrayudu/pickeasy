@@ -16,17 +16,16 @@ from app.models.base import AuditMixin, UUIDMixin, utcnow
 
 class BookingStatus(str, enum.Enum):
     PENDING = "pending"
-    SEARCHING = "searching"          # Looking for mechanic
     MECHANIC_ASSIGNED = "mechanic_assigned"
     MECHANIC_ACCEPTED = "mechanic_accepted"
-    MECHANIC_EN_ROUTE = "mechanic_en_route"
-    ARRIVED = "arrived"
-    INSPECTION = "inspection"
-    SERVICE_IN_PROGRESS = "service_in_progress"
-    AWAITING_APPROVAL = "awaiting_approval"   # Extra parts approval
+    MECHANIC_REJECTED = "mechanic_rejected"
+    MECHANIC_ARRIVED = "mechanic_arrived"
+    IN_PROGRESS = "in_progress"
+    INSPECTION_DONE = "inspection_done"
+    AWAITING_PAYMENT = "awaiting_payment"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
-    NO_MECHANIC_FOUND = "no_mechanic_found"
+    REFUNDED = "refunded"
 
 
 class Booking(AuditMixin, db.Model):

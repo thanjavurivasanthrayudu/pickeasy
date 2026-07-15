@@ -126,7 +126,7 @@ class BookingService:
         booking = Booking.query.get(booking_id)
         if not booking:
             raise NotFoundError("Booking not found.")
-        if booking.status not in [BookingStatus.PENDING, BookingStatus.SEARCHING]:
+        if booking.status not in [BookingStatus.PENDING]:
             raise ValidationError("Booking is no longer available.")
 
         booking.mechanic_id = mechanic.id
@@ -171,14 +171,16 @@ class BookingService:
     def update_status(booking_id: str, new_status: str, user_id: str, note: str = None) -> dict:
         booking = Booking.query.get(booking_id)
         if not booking:
-            raise NotFoundError("Booking not found.")
+            raise NotFoundError("Booking not found")
 
         booking.status = new_status
-        if new_status == BookingStatus.SERVICE_IN_PROGRESS:
+
+        # Basic state handling (simplified)
+        if new_status == BookingStatus.IN_PROGRESS:
             booking.service_started_at = datetime.now(timezone.utc)
         elif new_status == BookingStatus.COMPLETED:
-            booking.completed_at = datetime.now(timezone.utc)
-        elif new_status == BookingStatus.ARRIVED:
+            booking.service_completed_at = datetime.now(timezone.utc)
+        elif new_status == BookingStatus.MECHANIC_ARRIVED:
             booking.mechanic_arrived_at = datetime.now(timezone.utc)
 
         history = BookingStatusHistory(
