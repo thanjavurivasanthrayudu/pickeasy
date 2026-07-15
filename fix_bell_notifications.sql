@@ -1,6 +1,6 @@
--- Fix Master Trigger for Booking Updates (Sends Notifications to both Mechanics and Customers)
+-- Fix Master Trigger for Booking Updates (Sends Notifications to Mechanics and Customers)
 CREATE OR REPLACE FUNCTION handle_booking_updates_notify()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER SECURITY DEFINER AS $$
 DECLARE
   v_mechanic_user_id UUID;
   v_customer_user_id UUID;
@@ -20,53 +20,52 @@ BEGIN
 
   -- Define the notifications based on status
   CASE NEW.status
-    -- "mechanic_assigned" is triggered when Admin assigns a mechanic
+    -- Admin assigns a mechanic (Admin Accepts)
     WHEN 'mechanic_assigned' THEN
-      -- Notify Customer that Admin Accepted (and assigned a mechanic)
-      INSERT INTO notifications (user_id, title, body, type, is_read)
-      VALUES (v_customer_user_id, 'Service Request Accepted', 'Your service request has been accepted.', 'booking', false);
+      INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+      VALUES (v_customer_user_id, 'Service Request Accepted', 'Your service request has been accepted.', 'booking', false, 'booking_assigned');
       
-      -- Notify Mechanic
       IF v_mechanic_user_id IS NOT NULL THEN
-        INSERT INTO notifications (user_id, title, body, type, is_read)
-        VALUES (v_mechanic_user_id, 'New Job Assigned', 'You have been assigned a new service request.', 'booking', false);
+        INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+        VALUES (v_mechanic_user_id, 'New Job Assigned', 'You have been assigned a new service request.', 'booking', false, 'booking_assigned');
       END IF;
 
-    -- If a booking gets outright rejected/cancelled without a mechanic
+    -- Booking gets outright rejected/cancelled
     WHEN 'rejected' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Service Request Rejected', 'Your service request has been rejected.', 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Service Request Rejected', 'Your service request has been rejected.', 'booking', false, 'system');
        
     WHEN 'cancelled' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Service Request Rejected', 'Your service request has been rejected.', 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Service Request Rejected', 'Your service request has been rejected.', 'booking', false, 'system');
 
     WHEN 'mechanic_accepted' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Mechanic on the way', 'The mechanic is on their way for booking #' || NEW.booking_number, 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Mechanic on the way', 'The mechanic is on their way for booking #' || NEW.booking_number, 'booking', false, 'system');
        
     WHEN 'arrived' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Mechanic Arrived', 'The mechanic has arrived for booking #' || NEW.booking_number, 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Mechanic Arrived', 'The mechanic has arrived for booking #' || NEW.booking_number, 'booking', false, 'mechanic_arrived');
        
     WHEN 'in_progress' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Service Started', 'Service has started for booking #' || NEW.booking_number, 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Service Started', 'Service has started for booking #' || NEW.booking_number, 'booking', false, 'system');
 
     WHEN 'inspection_done' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Inspection Completed', 'The inspection report is ready for booking #' || NEW.booking_number, 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Inspection Completed', 'The inspection report is ready for booking #' || NEW.booking_number, 'booking', false, 'system');
 
     WHEN 'awaiting_payment' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Payment Required', 'Service for booking #' || NEW.booking_number || ' is complete. Please complete the payment.', 'payment', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Payment Required', 'Service for booking #' || NEW.booking_number || ' is complete. Please complete the payment.', 'payment', false, 'system');
 
     WHEN 'completed' THEN
-       INSERT INTO notifications (user_id, title, body, type, is_read)
-       VALUES (v_customer_user_id, 'Service Complete', 'Booking #' || NEW.booking_number || ' is completed and paid!', 'booking', false);
+       INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+       VALUES (v_customer_user_id, 'Service Complete', 'Booking #' || NEW.booking_number || ' is completed and paid!', 'booking', false, 'booking_completed');
+       
        IF v_mechanic_user_id IS NOT NULL THEN
-         INSERT INTO notifications (user_id, title, body, type, is_read)
-         VALUES (v_mechanic_user_id, 'Job Completed', 'Booking #' || NEW.booking_number || ' is complete!', 'booking', false);
+         INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
+         VALUES (v_mechanic_user_id, 'Job Completed', 'Booking #' || NEW.booking_number || ' is complete!', 'booking', false, 'booking_completed');
        END IF;
 
     ELSE

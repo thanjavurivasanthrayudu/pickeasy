@@ -33,7 +33,8 @@ export default function JobDetail() {
   const updateStatus = async (newStatus) => {
     const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', id)
     if (error) {
-      toast.error('Failed to update status')
+      console.error('Update status error:', error)
+      toast.error(error.message || 'Failed to update status')
     } else {
       toast.success(`Job marked as ${newStatus.replace('_', ' ')}!`)
       fetchJob()
@@ -115,7 +116,7 @@ export default function JobDetail() {
           {job.status === 'mechanic_assigned' && (
             <>
               <button onClick={() => updateStatus('mechanic_accepted')} className="btn btn-primary" style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px' }}><CheckCircle size={16} /> Accept Job</button>
-              <button onClick={() => updateStatus('pending')} className="btn btn-danger" style={{ display: 'flex', gap: 6, alignItems: 'center', background: '#E11D2E', color: 'white', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px', border: 'none' }}><XCircle size={16} /> Reject Job</button>
+              <button onClick={() => updateStatus('rejected')} className="btn btn-danger" style={{ display: 'flex', gap: 6, alignItems: 'center', background: '#E11D2E', color: 'white', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px', border: 'none' }}><XCircle size={16} /> Reject Job</button>
             </>
           )}
           {job.status === 'mechanic_accepted' && (
