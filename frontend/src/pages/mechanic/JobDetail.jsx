@@ -1,14 +1,66 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, User, MapPin, Phone, Truck, Wrench, CheckCircle, XCircle, CreditCard, Clock } from 'lucide-react'
+import {
+  ArrowLeft, User, MapPin, Phone, Truck, Wrench,
+  CheckCircle, XCircle, CreditCard, Clock, Play, FileText, CheckSquare
+} from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import toast from 'react-hot-toast'
+import './JobDetail.css'
+
+// Professional mapping for statuses, their visual badges, and permitted actions
+const STATUS_CONFIG = {
+  pending: { label: 'Pending', badge: 'badge-muted', actions: [] },
+  mechanic_assigned: {
+    label: 'Assigned',
+    badge: 'badge-warning',
+    actions: [
+      { label: 'Accept Job', targetStatus: 'mechanic_accepted', icon: CheckCircle, className: 'btn-primary', confirm: false },
+      { label: 'Reject Job', targetStatus: 'mechanic_rejected', icon: XCircle, className: 'btn-danger', confirm: true, confirmMsg: "Are you sure you want to reject this job?" }
+    ]
+  },
+  mechanic_accepted: {
+    label: 'Accepted',
+    badge: 'badge-info',
+    actions: [
+      { label: 'Mark Arrived', targetStatus: 'mechanic_arrived', icon: MapPin, className: 'btn-primary', confirm: false }
+    ]
+  },
+  mechanic_arrived: {
+    label: 'Arrived',
+    badge: 'badge-info',
+    actions: [
+      { label: 'Start Service', targetStatus: 'in_progress', icon: Play, className: 'btn-primary', confirm: false }
+    ]
+  },
+  in_progress: {
+    label: 'In Progress',
+    badge: 'badge-primary',
+    actions: [
+      { label: 'Complete Service', targetStatus: 'completed', icon: CheckSquare, className: 'btn-success', confirm: true, confirmMsg: "Confirm service completion?" }
+    ]
+  },
+  inspection_done: {
+    label: 'Inspection Done',
+    badge: 'badge-primary',
+    actions: [
+      { label: 'Complete Service', targetStatus: 'completed', icon: CheckSquare, className: 'btn-success', confirm: true, confirmMsg: "Confirm service completion?" }
+    ]
+  },
+  awaiting_payment: { label: 'Awaiting Payment', badge: 'badge-warning', actions: [] },
+  completed: { label: 'Completed', badge: 'badge-success', actions: [] },
+  mechanic_rejected: { label: 'Rejected', badge: 'badge-danger', actions: [] },
+  cancelled: { label: 'Cancelled', badge: 'badge-danger', actions: [] },
+  refunded: { label: 'Refunded', badge: 'badge-muted', actions: [] }
+}
 
 export default function JobDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false) // Guards API requests preventing duplicate clicks
 
   const fetchJob = async () => {
     setLoading(true)
@@ -30,36 +82,57 @@ export default function JobDetail() {
     fetchJob()
   }, [id])
 
-  const updateStatus = async (newStatus) => {
-    const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', id)
+  const updateStatus = async (newStatus, confirmRequired = false, confirmMsg = "Are you sure?") => {
+    if (confirmRequired && !window.confirm(confirmMsg)) {
+      return
+    }
+
+    setIsUpdating(true)
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: newStatus })
+      .eq('id', id)
+
     if (error) {
       console.error('Update status error:', error)
       toast.error(error.message || 'Failed to update status')
     } else {
-      toast.success(`Job marked as ${newStatus.replace('_', ' ')}!`)
-      fetchJob()
+      toast.success(`Job marked as ${newStatus.replace(/_/g, ' ')}!`)
+      await fetchJob() // Refresh local state after successful transaciton
     }
+    setIsUpdating(false)
   }
 
-  if (loading) return <div style={{ padding: 60, textAlign: 'center' }}>Loading...</div>
-  if (!job) return <div style={{ padding: 60, textAlign: 'center', fontSize: 18 }}>Job not found</div>
+  // Fallback states
+  if (loading) return <div className="loading-container">Loading job data...</div>
+  if (!job) return <div className="loading-container" style={{ fontSize: 18 }}>Job not found</div>
+
+  const currentStatusConfig = STATUS_CONFIG[job.status] || {
+    label: job.status?.replace(/_/g, ' '),
+    badge: 'badge-primary',
+    actions: []
+  }
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <button onClick={() => navigate(-1)} className="btn btn-ghost" style={{ padding: 8 }}><ArrowLeft size={20} /></button>
+    <div className="job-detail-container">
+      {/* Header Section */}
+      <div className="job-detail-header">
+        <button onClick={() => navigate(-1)} className="btn btn-ghost job-detail-back-btn">
+          <ArrowLeft size={20} />
+        </button>
         <div>
-          <h1 style={{ fontFamily: 'Poppins', fontSize: 24, fontWeight: 800 }}>🔩 Job Details #{job.booking_number || job.id.slice(0, 8).toUpperCase()}</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>Manage this service request</p>
+          <h1 className="job-detail-title">
+            🔩 Job Details #{job.booking_number || job.id.slice(0, 8).toUpperCase()}
+          </h1>
+          <p className="job-detail-subtitle">Manage this service request safely and securely</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-
+      <div className="job-detail-grid">
         {/* Customer Information */}
         <div className="card">
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}><User size={18} /> Customer Information</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+          <h2 className="card-title"><User size={18} /> Customer Information</h2>
+          <div className="card-content">
             <div><strong>Name:</strong> {job.customers?.profiles?.full_name || 'Walk-in'}</div>
             <div><strong>Mobile Number:</strong> {job.customers?.profiles?.phone || 'N/A'}</div>
             <div><strong>Email:</strong> {job.customers?.profiles?.email || 'N/A'}</div>
@@ -71,8 +144,8 @@ export default function JobDetail() {
 
         {/* Vehicle Information */}
         <div className="card">
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}><Truck size={18} /> Vehicle Information</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+          <h2 className="card-title"><Truck size={18} /> Vehicle Information</h2>
+          <div className="card-content">
             <div><strong>Brand:</strong> {job.vehicles?.brand || 'N/A'}</div>
             <div><strong>Model:</strong> {job.vehicles?.model || 'N/A'}</div>
             <div><strong>Reg Number:</strong> {job.vehicles?.registration_no || 'N/A'}</div>
@@ -84,8 +157,8 @@ export default function JobDetail() {
 
         {/* Booking Information */}
         <div className="card">
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}><Clock size={18} /> Booking Information</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+          <h2 className="card-title"><Clock size={18} /> Booking Information</h2>
+          <div className="card-content">
             <div><strong>Booking ID:</strong> {job.booking_number || job.id.slice(0, 8).toUpperCase()}</div>
             <div><strong>Booking Date:</strong> {new Date(job.created_at).toLocaleDateString()}</div>
             <div><strong>Preferred Date:</strong> {job.scheduled_date ? new Date(job.scheduled_date).toLocaleDateString() : 'N/A'}</div>
@@ -99,35 +172,58 @@ export default function JobDetail() {
 
         {/* Payment Information */}
         <div className="card">
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}><CreditCard size={18} /> Payment</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
-            <div><strong>Payment Status:</strong> <span className={`badge ${job.payment_status === 'paid' ? 'badge-success' : 'badge-warning'}`}>{job.payment_status || 'Pending'}</span></div>
+          <h2 className="card-title"><CreditCard size={18} /> Payment</h2>
+          <div className="card-content">
+            <div>
+              <strong>Payment Status:</strong>
+              <span className={`badge ${job.payment_status === 'paid' ? 'badge-success' : 'badge-warning'}`} style={{ marginLeft: 8 }}>
+                {job.payment_status || 'Pending'}
+              </span>
+            </div>
             <div><strong>Payment Method:</strong> {job.payment_method || 'Online'}</div>
             <div><strong>Invoice Status:</strong> {job.invoice_status || 'Generated'}</div>
           </div>
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}><Wrench size={18} /> Action & Status</h2>
-        <div style={{ marginBottom: 16 }}><strong>Current Status:</strong> <span className="badge badge-primary">{job.status.replace('_', ' ')}</span></div>
+      {/* Action & Status Box (Dynamic State Engine) */}
+      <div className="card action-status-card">
+        <h2 className="card-title"><Wrench size={18} /> Action & Status</h2>
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {job.status === 'mechanic_assigned' && (
-            <>
-              <button onClick={() => updateStatus('mechanic_accepted')} className="btn btn-primary" style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px' }}><CheckCircle size={16} /> Accept Job</button>
-              <button onClick={() => updateStatus('rejected')} className="btn btn-danger" style={{ display: 'flex', gap: 6, alignItems: 'center', background: '#E11D2E', color: 'white', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px', border: 'none' }}><XCircle size={16} /> Reject Job</button>
-            </>
-          )}
-          {job.status === 'mechanic_accepted' && (
-            <button onClick={() => updateStatus('in_progress')} className="btn btn-primary" style={{ cursor: 'pointer', padding: '10px 20px', borderRadius: '8px' }}>Start Service</button>
-          )}
-          {job.status === 'in_progress' && (
-            <button onClick={() => updateStatus('completed')} className="btn btn-success" style={{ background: '#10B981', color: 'white', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px', border: 'none' }}>Complete Service</button>
-          )}
-          <button onClick={() => navigate(`/mechanic/jobs/${id}/inspection`)} className="btn btn-ghost" style={{ border: '1px solid var(--border)', cursor: 'pointer', padding: '10px 20px', borderRadius: '8px' }}>View Inspection</button>
+        <div className="action-status-current">
+          <strong>Current Status:</strong>
+          <span className={`badge ${currentStatusConfig.badge}`} style={{ marginLeft: 8 }}>
+            {currentStatusConfig.label}
+          </span>
+        </div>
+
+        <div className="action-button-group">
+          {/* Dynamically render mapped action buttons */}
+          {currentStatusConfig.actions?.map((action, index) => {
+            const Icon = action.icon
+            return (
+              <button
+                key={index}
+                disabled={isUpdating}
+                onClick={() => updateStatus(action.targetStatus, action.confirm, action.confirmMsg)}
+                className={`btn ${action.className} btn-action`}
+              >
+                <Icon size={16} /> {action.label}
+              </button>
+            )
+          })}
+
+          {/* Persistent Inspection Button (Only disabled if actively updating) */}
+          <button
+            disabled={isUpdating}
+            onClick={() => navigate(`/mechanic/jobs/${id}/inspection`)}
+            className="btn btn-ghost btn-action btn-inspect"
+          >
+            <FileText size={16} /> View Inspection
+          </button>
         </div>
       </div>
+
     </div>
   )
 }

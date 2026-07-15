@@ -30,8 +30,8 @@ BEGIN
         VALUES (v_mechanic_user_id, 'New Job Assigned', 'You have been assigned a new service request.', 'booking', false, 'booking_assigned');
       END IF;
 
-    -- Booking gets outright rejected/cancelled
-    WHEN 'rejected' THEN
+    -- Booking gets outright rejected/cancelled (Now using the correct 'mechanic_rejected' enum!)
+    WHEN 'mechanic_rejected' THEN
        INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
        VALUES (v_customer_user_id, 'Service Request Rejected', 'Your service request has been rejected.', 'booking', false, 'system');
        
