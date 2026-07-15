@@ -36,6 +36,9 @@ export default function NotificationsDropdown() {
                 type="button"
                 onClick={(e) => {
                     e.stopPropagation()
+                    if (!open && unreadCount > 0) {
+                        markAllAsRead();
+                    }
                     setOpen(prev => !prev)
                 }}
                 className="btn btn-icon btn-ghost"
