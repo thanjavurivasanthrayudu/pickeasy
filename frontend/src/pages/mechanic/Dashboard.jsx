@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
-import { Trophy, Star, TrendingUp, CheckCircle, Award } from 'lucide-react'
+import { Trophy, Star, TrendingUp, CheckCircle, Award, Clock, XCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useMechanicRecord, useMechanicJobs, useAvailableJobs } from '../../hooks/useSupabase'
 import { supabase } from '../../services/supabase'
@@ -28,16 +28,34 @@ export default function MechanicDashboard() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const todayEarn = jobs.filter(j => new Date(j.created_at) >= today && (j.status === 'completed' || j.status === 'paid')).reduce((sum, j) => sum + (j.total_amount || j.service_packages?.base_price || 0), 0)
+  const todayEarn = jobs.filter(j => new Date(j.created_at || j.assigned_at) >= today && (j.status === 'completed' || j.status === 'paid')).reduce((sum, j) => sum + (Number(j.total_amount || j.base_amount || j.service_packages?.base_price || 0)), 0)
 
   // This week logic
   const dayOfWeek = (today.getDay() || 7) - 1 // Mon = 0
   const thisWeekStart = new Date(today)
   thisWeekStart.setDate(today.getDate() - dayOfWeek)
 
+  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+
+  const todaysJobsList = jobs.filter(j => new Date(j.created_at || j.assigned_at) >= today)
+  const todaysJobs = todaysJobsList.length
+
+  const monthlyJobsList = jobs.filter(j => new Date(j.created_at || j.assigned_at) >= thisMonthStart)
+  const monthlyJobs = monthlyJobsList.length
+  const monthlyEarnings = monthlyJobsList.filter(j => j.status === 'completed' || j.status === 'paid').reduce((sum, j) => sum + (Number(j.total_amount || j.base_amount || j.service_packages?.base_price || 0)), 0)
+
+  const pendingJobs = jobs.filter(j => j.status === 'pending').length
+  const completedJobs = jobs.filter(j => j.status === 'completed').length
+  const cancelledJobs = jobs.filter(j => j.status === 'cancelled').length
+
+  const acceptanceRate = jobs.length > 0 ? Math.round((jobs.filter(j => j.status !== 'pending' && j.status !== 'cancelled').length / jobs.length) * 100) : 100
+  const completionRate = (completedJobs + cancelledJobs) > 0 ? Math.round((completedJobs / (completedJobs + cancelledJobs)) * 100) : 100
+  const avgRating = mechanicRecord?.rating || '0.0'
+  const customerReviews = mechanicRecord?.reviews_count || completedJobs
+
   const weekJobsList = jobs.filter(j => new Date(j.created_at) >= thisWeekStart)
   const weekJobs = weekJobsList.length
-  const weekEarn = weekJobsList.filter(j => j.status === 'completed' || j.status === 'paid').reduce((sum, j) => sum + (j.total_amount || j.service_packages?.base_price || 0), 0)
+  const weekEarn = weekJobsList.filter(j => j.status === 'completed' || j.status === 'paid').reduce((sum, j) => sum + (Number(j.total_amount || j.base_amount || j.service_packages?.base_price || 0)), 0)
 
   const WEEKLY = [
     { day: 'Mon', jobs: 0, earn: 0 }, { day: 'Tue', jobs: 0, earn: 0 },
@@ -51,16 +69,29 @@ export default function MechanicDashboard() {
     let idx = (d.getDay() || 7) - 1
     WEEKLY[idx].jobs += 1
     if (j.status === 'completed' || j.status === 'paid') {
-      WEEKLY[idx].earn += (j.total_amount || j.service_packages?.base_price || 0)
+      WEEKLY[idx].earn += (Number(j.total_amount || j.base_amount || j.service_packages?.base_price || 0))
     }
   })
 
-  const recentJobs = jobs.slice(0, 5).map(j => ({
+  // We support up to 10 recent jobs
+  const recentJobs = jobs.slice(0, 10).map(j => ({
+    id: j.id,
+    bookingId: j.booking_number || j.id.slice(0, 8).toUpperCase(),
     customer: j.customers?.profiles?.full_name || 'Walk-in',
+    phone: j.customers?.profiles?.phone || 'N/A',
+    address: j.address || j.city || 'N/A',
+    vehicle: j.vehicles ? `${j.vehicles.brand} ${j.vehicles.model}` : 'Unknown',
+    regNumber: j.vehicles?.registration_no || 'N/A',
     service: j.service_packages?.name || 'Standard Service',
-    status: j.status,
-    earned: `₹${j.total_amount || j.service_packages?.base_price || 0}`,
-    vehicle: j.vehicles ? `${j.vehicles.brand} ${j.vehicles.model}` : 'Unknown'
+    serviceType: j.service_packages?.category || 'General',
+    status: j.status || 'pending',
+    paymentStatus: j.payment_status || 'pending',
+    bookingDate: new Date(j.created_at).toLocaleDateString(),
+    scheduledDate: j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : 'N/A',
+    scheduledTime: j.scheduled_time || 'N/A',
+    assignedDate: j.assigned_at ? new Date(j.assigned_at).toLocaleDateString() : 'N/A',
+    duration: j.estimated_duration || 'N/A',
+    earned: `₹${Number(j.total_amount || j.base_amount || j.service_packages?.base_price || 0).toLocaleString()}`
   }))
 
   return (
@@ -72,13 +103,10 @@ export default function MechanicDashboard() {
           <h1 style={{ fontFamily: 'Poppins', fontSize: 26, fontWeight: 800, color: 'white', marginBottom: 8 }}>{user?.full_name} 🔧</h1>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-              <Star size={14} fill="#F59E0B" color="#F59E0B" /> {mechanicRecord?.rating || '4.9'} Rating
+              <Star size={14} fill="#F59E0B" color="#F59E0B" /> {avgRating} Rating
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-              <CheckCircle size={14} color="#10B981" /> 98% Completion
-            </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-              <Trophy size={14} color="#F59E0B" /> Rank #3 This Week
+              <CheckCircle size={14} color="#10B981" /> {completionRate}% Completion
             </div>
           </div>
         </div>
@@ -89,12 +117,19 @@ export default function MechanicDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid-4">
+      <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
         {[
-          { label: "This Week's Jobs", value: weekJobs, icon: CheckCircle, color: '#10B981' },
-          { label: "Week Earnings", value: `₹${weekEarn.toLocaleString()}`, icon: TrendingUp, color: 'var(--primary)' },
-          { label: "Avg Rating", value: `${mechanicRecord?.rating || '4.9'} ⭐`, icon: Star, color: '#F59E0B' },
-          { label: "Leaderboard Rank", value: '#3', icon: Trophy, color: '#8B5CF6' },
+          { label: "Today's Jobs", value: todaysJobs, icon: CheckCircle, color: '#10B981' },
+          { label: "Today's Earnings", value: `₹${todayEarn.toLocaleString()}`, icon: TrendingUp, color: 'var(--primary)' },
+          { label: "Pending Jobs", value: pendingJobs, icon: Clock, color: '#F59E0B' },
+          { label: "Completed Jobs", value: completedJobs, icon: CheckCircle, color: '#10B981' },
+          { label: "Cancelled Jobs", value: cancelledJobs, icon: XCircle, color: '#E11D2E' },
+          { label: "Monthly Jobs", value: monthlyJobs, icon: Clock, color: '#3B82F6' },
+          { label: "Monthly Earnings", value: `₹${monthlyEarnings.toLocaleString()}`, icon: TrendingUp, color: 'var(--primary)' },
+          { label: "Avg Rating", value: `${avgRating} ⭐`, icon: Star, color: '#F59E0B' },
+          { label: "Customer Reviews", value: customerReviews, icon: Star, color: '#F59E0B' },
+          { label: "Acceptance Rate", value: `${acceptanceRate}%`, icon: CheckCircle, color: '#10B981' },
+          { label: "Completion Rate", value: `${completionRate}%`, icon: Trophy, color: '#8B5CF6' },
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div style={{ width: 44, height: 44, borderRadius: 12, background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
@@ -147,29 +182,41 @@ export default function MechanicDashboard() {
         </div>
       </div>
 
-      {/* Recent Jobs Table */}
+      {/* Recent Jobs Cards */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px 16px' }}>
           <h2 style={{ fontFamily: 'Poppins', fontSize: 15, fontWeight: 700 }}>Recent Jobs</h2>
         </div>
-        <table className="data-table">
-          <thead>
-            <tr><th>Customer</th><th>Vehicle</th><th>Service</th><th>Status</th><th>Earned</th></tr>
-          </thead>
-          <tbody>
-            {recentJobs.length === 0 ? (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px 0' }}>No recent jobs found.</td></tr>
-            ) : recentJobs.map((j, i) => (
-              <tr key={i}>
-                <td style={{ fontWeight: 600 }}>{j.customer}</td>
-                <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{j.vehicle}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{j.service}</td>
-                <td><span className={`badge ${j.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>{j.status.replace('_', ' ')}</span></td>
-                <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{j.earned}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{ display: 'grid', gap: '16px', padding: '16px' }}>
+          {recentJobs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>No Recent Jobs Available</div>
+          ) : recentJobs.map((j, i) => (
+            <div key={i} style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex-between">
+                <div style={{ fontWeight: 700, fontSize: '15px' }}>{j.service}</div>
+                <span className={`badge ${j.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>{j.status.replace('_', ' ')}</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <div><strong>Booking ID:</strong> #{j.bookingId}</div>
+                <div><strong>Customer:</strong> {j.customer}</div>
+                <div><strong>Phone:</strong> {j.phone}</div>
+                <div><strong>Address:</strong> {j.address}</div>
+                <div><strong>Vehicle:</strong> {j.vehicle}</div>
+                <div><strong>Reg No:</strong> {j.regNumber}</div>
+                <div><strong>Type:</strong> {j.serviceType}</div>
+                <div><strong>Booked:</strong> {j.bookingDate}</div>
+                <div><strong>Scheduled:</strong> {j.scheduledDate} {j.scheduledTime}</div>
+                <div><strong>Assigned:</strong> {j.assignedDate}</div>
+                <div><strong>Duration:</strong> {j.duration}</div>
+                <div><strong>Payment Form:</strong> <span className={`badge ${j.paymentStatus === 'paid' ? 'badge-success' : 'badge-warning'}`}>{j.paymentStatus}</span></div>
+              </div>
+              <div style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)', marginTop: '8px' }}>
+                {j.earned}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Available Pool of Jobs */}

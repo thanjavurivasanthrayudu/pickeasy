@@ -13,6 +13,12 @@ export default function MechanicProfile() {
   const [form, setForm] = useState({ full_name: user?.full_name || '', phone: user?.phone || '' })
   const [mechForm, setMechForm] = useState(null)
 
+  // Wallet state
+  const [walletForm, setWalletForm] = useState(null)
+  // Password state
+  const [pwdForm, setPwdForm] = useState({ current: '', newPwd: '', confirm: '' })
+  const [pwdLoading, setPwdLoading] = useState(false)
+
   const handleSaveProfile = async () => {
     try {
       await update({ full_name: form.full_name, phone: form.phone })
@@ -35,6 +41,37 @@ export default function MechanicProfile() {
     toast.success('Service details updated!')
     refetch()
     setMechForm(null)
+  }
+
+  const handleSaveWallet = async () => {
+    if (!mechanic?.id) return
+    const { error } = await supabase.from('mechanics').update({
+      bank_account_no: walletForm.bank_account_no,
+      bank_ifsc: walletForm.bank_ifsc,
+      upi_id: walletForm.upi_id,
+    }).eq('id', mechanic.id)
+    if (error) { toast.error(error.message); return }
+    toast.success('Wallet details updated!')
+    refetch()
+    setWalletForm(null)
+  }
+
+  const handlePasswordChange = async () => {
+    if (pwdForm.newPwd !== pwdForm.confirm) {
+      return toast.error('New passwords do not match')
+    }
+    if (pwdForm.newPwd.length < 6) {
+      return toast.error('Password must be at least 6 characters')
+    }
+    setPwdLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: pwdForm.newPwd })
+    setPwdLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Password updated successfully')
+      setPwdForm({ current: '', newPwd: '', confirm: '' })
+    }
   }
 
   const inp = {
@@ -151,9 +188,10 @@ export default function MechanicProfile() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 14 }}>
               {[
-                ['City', mechanic.city || '—'],
+                ['City (Service Center)', mechanic.city || '—'],
                 ['Service Radius', `${mechanic.service_radius_km || 10} km`],
                 ['Experience', `${mechanic.experience_years || 0} years`],
+                ['Skills', 'Bike Engineering, Diagnostics'],
                 ['Total Jobs', mechanic.total_jobs || 0],
                 ['Avg Rating', mechanic.rating > 0 ? `${Number(mechanic.rating).toFixed(1)} ⭐` : 'No ratings yet'],
                 ['UPI ID', mechanic.upi_id || '—'],
@@ -167,6 +205,77 @@ export default function MechanicProfile() {
           )}
         </div>
       )}
+
+      {/* Wallet Information */}
+      {mechanic && (
+        <div className="card" style={{ padding: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: 16 }}>Wallet & Payout Info</h2>
+            <button onClick={() => setWalletForm(walletForm ? null : {
+              bank_account_no: mechanic.bank_account_no || '',
+              bank_ifsc: mechanic.bank_ifsc || '',
+              upi_id: mechanic.upi_id || ''
+            })} className="btn btn-ghost btn-sm">
+              {walletForm ? 'Cancel' : <><Edit2 size={14} /> Edit</>}
+            </button>
+          </div>
+          {walletForm ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Bank Account No</label>
+                  <input style={inp} value={walletForm.bank_account_no} onChange={e => setWalletForm(f => ({ ...f, bank_account_no: e.target.value }))} placeholder="Account Number" />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Bank IFSC</label>
+                  <input style={inp} value={walletForm.bank_ifsc} onChange={e => setWalletForm(f => ({ ...f, bank_ifsc: e.target.value }))} placeholder="IFSC Code" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>UPI ID</label>
+                  <input style={inp} value={walletForm.upi_id} onChange={e => setWalletForm(f => ({ ...f, upi_id: e.target.value }))} placeholder="yourname@upi" />
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={handleSaveWallet}
+                style={{ alignSelf: 'flex-start', display: 'flex', gap: 6, alignItems: 'center' }}>
+                <Save size={15} /> Save Wallet Info
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 14 }}>
+              {[
+                ['Total Earnings', `₹${Number(mechanic.total_earnings || 0).toLocaleString()}`],
+                ['UPI ID', mechanic.upi_id || '—'],
+                ['Bank Account No', mechanic.bank_account_no ? `XXXXXX${mechanic.bank_account_no.slice(-4)}` : '—'],
+                ['Bank IFSC', mechanic.bank_ifsc || '—']
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>{k}</div>
+                  <div style={{ fontWeight: 600, color: k === 'Total Earnings' ? 'var(--primary)' : 'inherit' }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Security (Change Password) */}
+      <div className="card" style={{ padding: 28 }}>
+        <h2 style={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: 16, marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center' }}><Shield size={16} /> Security</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>New Password</label>
+            <input type="password" style={inp} value={pwdForm.newPwd} onChange={e => setPwdForm(f => ({ ...f, newPwd: e.target.value }))} placeholder="Enter new password" />
+          </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Confirm New Password</label>
+            <input type="password" style={inp} value={pwdForm.confirm} onChange={e => setPwdForm(f => ({ ...f, confirm: e.target.value }))} placeholder="Confirm new password" />
+          </div>
+          <button onClick={handlePasswordChange} disabled={pwdLoading} className="btn btn-primary"
+            style={{ alignSelf: 'flex-start', display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }}>
+            <Shield size={16} /> {pwdLoading ? 'Updating…' : 'Update Password'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

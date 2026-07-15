@@ -102,32 +102,51 @@ export function useCustomerBookings(customerId) {
 
 // ── Bookings (mechanic) ────────────────────────────────────
 export function useMechanicJobs(mechanicId) {
-    return useSupabaseQuery(async () => {
+    const { data, loading, error, refetch } = useSupabaseQuery(async () => {
         if (!mechanicId) return []
         const { data, error } = await supabase
             .from('bookings')
             .select(`
                 *,
-                vehicles(brand, model, vehicle_type),
-                customers(user_id, profiles(full_name, phone, email)),
-                service_packages(name, base_price)
+                vehicles(*),
+                customers(user_id, profiles(*)),
+                service_packages(*)
             `)
             .eq('mechanic_id', mechanicId)
             .order('created_at', { ascending: false })
         if (error) throw error
         return data || []
     }, [mechanicId])
+
+    useEffect(() => {
+        if (!mechanicId) return;
+        const channel = supabase.channel(`mechanic-jobs-${mechanicId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'bookings', filter: `mechanic_id=eq.${mechanicId}` },
+                () => {
+                    refetch();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        }
+    }, [mechanicId, refetch]);
+
+    return { data, loading, error, refetch }
 }
 
 export function useAvailableJobs() {
-    return useSupabaseQuery(async () => {
+    const { data, loading, error, refetch } = useSupabaseQuery(async () => {
         const { data, error } = await supabase
             .from('bookings')
             .select(`
                 *,
-                vehicles(brand, model, vehicle_type),
-                customers(user_id, profiles(full_name)),
-                service_packages(name, base_price)
+                vehicles(*),
+                customers(user_id, profiles(*)),
+                service_packages(*)
             `)
             .is('mechanic_id', null)
             .eq('status', 'pending')
@@ -135,6 +154,24 @@ export function useAvailableJobs() {
         if (error) throw error
         return data || []
     }, [])
+
+    useEffect(() => {
+        const channel = supabase.channel(`available-jobs`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'bookings', filter: `status=eq.pending` },
+                () => {
+                    refetch();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        }
+    }, [refetch]);
+
+    return { data, loading, error, refetch }
 }
 
 // ── Service categories ────────────────────────────────────
