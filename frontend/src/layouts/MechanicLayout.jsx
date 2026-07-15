@@ -13,6 +13,7 @@ import NotificationsDropdown from '../components/NotificationsDropdown'
 const NAV = [
     { to: '/mechanic', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { to: '/mechanic/jobs', label: 'My Jobs', icon: Briefcase },
+    { to: '/mechanic/inspection', label: 'Inspection', icon: Wrench },
     { to: '/mechanic/earnings', label: 'Earnings', icon: TrendingUp },
     { to: '/mechanic/leaderboard', label: 'Leaderboard', icon: Trophy },
     { to: '/mechanic/profile', label: 'Profile', icon: User },

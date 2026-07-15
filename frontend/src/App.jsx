@@ -104,7 +104,7 @@ export default function App() {
                 <Route index element={<MechanicDashboard />} />
                 <Route path="jobs" element={<MechanicJobs />} />
                 <Route path="jobs/:id" element={<JobDetail />} />
-                <Route path="jobs/:id/inspection" element={<InspectionPage />} />
+                <Route path="inspection" element={<InspectionPage />} />
                 <Route path="earnings" element={<MechanicEarnings />} />
                 <Route path="leaderboard" element={<MechanicLeaderboard />} />
                 <Route path="profile" element={<MechanicProfile />} />

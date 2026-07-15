@@ -17,6 +17,10 @@ export default function BookingDetails() {
   const [submittingReview, setSubmittingReview] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('razorpay')
 
+  // Fake Gateway State
+  const [showFakeGateway, setShowFakeGateway] = useState(false)
+  const [paymentStep, setPaymentStep] = useState(0) // 0: input, 1: processing, 2: success
+
   useEffect(() => {
     if (!id) return;
     const fetchBooking = async () => {
@@ -41,16 +45,15 @@ export default function BookingDetails() {
   }, [id])
 
   const handlePayment = async () => {
-    if (paymentMethod === 'cash' || paymentMethod === 'upi') {
-      const isCash = paymentMethod === 'cash';
-      toast.success(isCash ? 'Cash payment confirmed!' : 'UPI payment confirmed!');
+    if (paymentMethod === 'cash') {
+      toast.success('Cash payment logged! Mechanic will collect upon arrival.');
 
       await supabase.from('payments').insert({
         booking_id: booking.id,
         customer_id: booking.customer_id,
         amount: booking.total_amount,
-        method: paymentMethod,
-        status: isCash ? 'pending' : 'success'
+        method: 'cash',
+        status: 'pending'
       });
 
       await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id);
@@ -58,52 +61,40 @@ export default function BookingDetails() {
       return;
     }
 
-    const options = {
-      key: "rzp_test_mock_key_here", // Enter the Key ID generated from the Dashboard
-      amount: Math.round(booking.total_amount * 100).toString(), // Amount is in currency subunits. Default currency is INR.
-      currency: "INR",
-      name: "RIDE EASYY",
-      description: "Service Payment",
-      handler: async function (response) {
-        toast.success(`Payment successful! ID: ${response.razorpay_payment_id}`)
-
-        // Save transaction to payments table
-        await supabase.from('payments').insert({
-          booking_id: booking.id,
-          customer_id: booking.customer_id,
-          amount: booking.total_amount,
-          method: 'razorpay',
-          razorpay_payment_id: response.razorpay_payment_id,
-          status: 'success'
-        });
-
-        // Update booking status
-        await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id)
-        setBooking({ ...booking, status: 'completed' })
-      },
-      prefill: {
-        name: user?.full_name || '',
-        email: user?.email || '',
-        contact: user?.phone || ''
-      },
-      theme: {
-        color: "#16a34a"
-      }
-    };
-
-    // Dynamically load Razorpay SDK if not exists
-    if (window.Razorpay) {
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      };
-      document.body.appendChild(script);
+    if (paymentMethod === 'razorpay') {
+      // Trigger Fake Payment Modal instead of actual Razorpay
+      setShowFakeGateway(true)
+      setPaymentStep(0)
     }
+  }
+
+  const simulateOnlinePayment = async () => {
+    setPaymentStep(1) // Processing
+
+    // Simulate network delay
+    setTimeout(async () => {
+      const mockTxnId = 'pay_' + Math.random().toString(36).substr(2, 9)
+
+      await supabase.from('payments').insert({
+        booking_id: booking.id,
+        customer_id: booking.customer_id,
+        amount: booking.total_amount,
+        method: 'razorpay', // store as razorpay to keep logic intact
+        razorpay_payment_id: mockTxnId,
+        status: 'success'
+      });
+
+      await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id)
+
+      setPaymentStep(2) // Success
+
+      setTimeout(() => {
+        setBooking({ ...booking, status: 'completed' })
+        setShowFakeGateway(false)
+        toast.success(`Payment successful! ID: ${mockTxnId}`)
+      }, 1500)
+
+    }, 2000)
   }
 
   const submitReview = async () => {
@@ -197,39 +188,41 @@ export default function BookingDetails() {
               </div>
             </div>
 
-            {booking.status === 'awaiting_payment' ? (
+            {booking.status !== 'completed' && booking.status !== 'cancelled' ? (
               <div>
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Select Payment Method</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                    {['razorpay', 'upi', 'cash'].map(method => (
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10 }}>Select Payment Mode</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                    {[
+                      { id: 'razorpay', label: 'Online Payment (Cards, UPI, Wallets, NetBanking)', icon: <CreditCard size={16} /> },
+                      { id: 'cash', label: 'Pay with Cash (COD)', icon: <CreditCard size={16} /> }
+                    ].map(method => (
                       <button
-                        key={method}
-                        onClick={() => setPaymentMethod(method)}
+                        key={method.id}
+                        onClick={() => setPaymentMethod(method.id)}
                         style={{
-                          padding: '10px 8px',
-                          border: `1.5px solid ${paymentMethod === method ? 'var(--primary)' : 'var(--border)'}`,
+                          padding: '12px 16px',
+                          border: `1.5px solid ${paymentMethod === method.id ? 'var(--primary)' : 'var(--border)'}`,
                           borderRadius: 8,
-                          background: paymentMethod === method ? 'var(--primary-light)' : 'var(--bg)',
-                          color: paymentMethod === method ? 'var(--primary)' : 'var(--text-primary)',
+                          background: paymentMethod === method.id ? 'var(--primary-light)' : 'var(--bg)',
+                          color: paymentMethod === method.id ? 'var(--primary)' : 'var(--text-primary)',
                           fontWeight: 600,
-                          fontSize: 12,
-                          textTransform: 'capitalize',
+                          fontSize: 13,
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          transition: 'all 0.2s'
+                          gap: 10,
+                          transition: 'all 0.2s',
+                          textAlign: 'left'
                         }}
                       >
-                        <CreditCard size={14} /> {method === 'razorpay' ? 'Card / Net' : method}
+                        {method.icon} {method.label}
                       </button>
                     ))}
                   </div>
                 </div>
                 <button onClick={handlePayment} className="btn btn-primary" style={{ width: '100%', display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
-                  <CreditCard size={18} /> Pay via {paymentMethod === 'razorpay' ? 'Razorpay' : paymentMethod.toUpperCase()}
+                  <CreditCard size={18} /> {paymentMethod === 'razorpay' ? 'Proceed to Razorpay' : 'Confirm Cash Payment'}
                 </button>
               </div>
             ) : booking.status === 'completed' ? (
@@ -237,8 +230,8 @@ export default function BookingDetails() {
                 <CheckCircle2 size={18} /> Payment Completed
               </div>
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                Payment options will be available once inspection is done.
+              <div style={{ textAlign: 'center', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+                Booking Cancelled
               </div>
             )}
           </div>
@@ -289,6 +282,87 @@ export default function BookingDetails() {
           )}
         </div>
       </div>
+
+      {/* REALISTIC RAZORPAY MOCK MODAL */}
+      {showFakeGateway && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            width: 480, background: '#fff', borderRadius: 8, overflow: 'hidden',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)', fontFamily: 'Arial, sans-serif',
+            color: '#333'
+          }}>
+            {/* Razorpay Header */}
+            <div style={{ background: '#3399cc', padding: '16px 20px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src="/logo.png" style={{ width: 32, objectFit: 'contain' }} alt="Logo" />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 16 }}>RIDE EASYY</div>
+                  <div style={{ fontSize: 12, opacity: 0.9 }}>Order #{booking.booking_number || booking.id.slice(0, 8)}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>₹{booking.total_amount}</div>
+            </div>
+
+            {paymentStep === 0 && (
+              <div style={{ padding: 24 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: '#555' }}>Select Payment Method (TEST MODE)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {['UPI', 'Card', 'Netbanking', 'Wallet'].map((m) => (
+                    <button
+                      key={m}
+                      onClick={simulateOnlinePayment}
+                      style={{
+                        padding: '16px 20px', border: '1px solid #e0e0e0', borderRadius: 4, background: '#fafafa',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+                        fontSize: 14, fontWeight: 500, color: '#333'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <CreditCard size={18} color="#3399cc" /> Pay via {m}
+                      </div>
+                      <span style={{ color: '#aaa', fontSize: 18 }}>›</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: 24, textAlign: 'center' }}>
+                  <button onClick={() => setShowFakeGateway(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
+                    Cancel & Go Back
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {paymentStep === 1 && (
+              <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+                <div style={{ width: 40, height: 40, border: '3px solid #f0f0f0', borderTopColor: '#3399cc', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#333' }}>Processing Payment...</h3>
+                <p style={{ color: '#888', fontSize: 13, marginTop: 8 }}>Please do not close this window or press back.</p>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+
+            {paymentStep === 2 && (
+              <div style={{ padding: '60px 24px', textAlign: 'center', color: '#16a34a' }}>
+                <CheckCircle2 size={56} style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: '#333' }}>Payment Successful!</h3>
+                <p style={{ color: '#888', fontSize: 14, marginTop: 8 }}>Redirecting back to dashboard...</p>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{ background: '#f5f5f5', padding: '12px 20px', fontSize: 11, color: '#aaa', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Powered by <strong>Razorpay</strong> (Mock)</span>
+              <span>TEST MODE</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
