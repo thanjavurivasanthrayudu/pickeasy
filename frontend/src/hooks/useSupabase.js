@@ -138,6 +138,47 @@ export function useMechanicJobs(mechanicId) {
     return { data, loading, error, refetch }
 }
 
+// ── Inspections (mechanic) ────────────────────────────────────
+export function useMechanicInspections(mechanicId) {
+    const { data, loading, error, refetch } = useSupabaseQuery(async () => {
+        if (!mechanicId) return []
+        const { data, error } = await supabase
+            .from('inspections')
+            .select(`
+                *,
+                bookings(
+                    booking_number, 
+                    notes,
+                    vehicles(brand, model, registration_no),
+                    customers(profiles(full_name))
+                )
+            `)
+            .eq('mechanic_id', mechanicId)
+            .order('created_at', { ascending: false })
+        if (error) throw error
+        return data || []
+    }, [mechanicId])
+
+    useEffect(() => {
+        if (!mechanicId) return;
+        const channel = supabase.channel(`mechanic-inspections-${mechanicId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'inspections', filter: `mechanic_id=eq.${mechanicId}` },
+                () => {
+                    refetch();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        }
+    }, [mechanicId, refetch]);
+
+    return { data, loading, error, refetch }
+}
+
 export function useAvailableJobs() {
     const { data, loading, error, refetch } = useSupabaseQuery(async () => {
         const { data, error } = await supabase
@@ -251,6 +292,22 @@ export function useAllBookings() {
                 service_packages(name)
             `)
             .order('created_at', { ascending: false })
+        if (error) throw error
+        return data || []
+    }, [])
+}
+
+// ── Admin: All inspections ────────────────────────────────
+export function useAdminInspections() {
+    return useSupabaseQuery(async () => {
+        const { data, error } = await supabase
+            .from('inspections')
+            .select(`
+                *,
+                mechanics(profiles(full_name)),
+                bookings(booking_number, vehicles(brand, registration_no), customers(profiles(full_name)))
+            `)
+            .order('updated_at', { ascending: false })
         if (error) throw error
         return data || []
     }, [])

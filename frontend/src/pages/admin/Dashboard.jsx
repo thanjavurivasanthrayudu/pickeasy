@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Users, Wrench, Calendar, CreditCard, TrendingUp, ShoppingCart,
-    Star, AlertCircle, Clock, CheckCircle, XCircle, PauseCircle, PlayCircle,
+    Star, AlertCircle, Clock, CheckCircle, XCircle, PauseCircle, PlayCircle, FileCheck, ClipboardList,
     Package, ArrowUp, ArrowDown, Database, DollarSign, RefreshCw
 } from 'lucide-react'
-import { useAllBookings, useAllProfiles } from '../../hooks/useSupabase'
+import { useAllBookings, useAllProfiles, useAdminInspections } from '../../hooks/useSupabase'
 import { supabase } from '../../services/supabase'
 import toast from 'react-hot-toast'
 
@@ -47,6 +47,7 @@ function SectionHeader({ title, icon: Icon }) {
 export default function AdminDashboard() {
     const { data: bookingsData } = useAllBookings()
     const { data: profilesData, refetch } = useAllProfiles()
+    const { data: inspectionsData } = useAdminInspections()
 
     const bookings = bookingsData || []
     const profiles = profilesData || []
@@ -64,6 +65,12 @@ export default function AdminDashboard() {
     const customerCount = profiles.filter(p => p.role === 'customer').length
     const mechanicCount = profiles.filter(p => p.role === 'mechanic').length
     const pendingJobs = bookings.filter(b => b.status === 'pending' || b.status === 'in_progress').length
+
+    const inspections = inspectionsData || []
+    const todaysInspections = inspections.filter(i => new Date(i.updated_at) >= today)
+    const goodInspections = todaysInspections.filter(i => i.inspection_result === 'Good').length
+    const badInspections = todaysInspections.filter(i => i.inspection_result === 'Bad').length
+    const unableInspections = todaysInspections.filter(i => i.inspection_result === 'Unable to Resolve').length
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
@@ -96,6 +103,44 @@ export default function AdminDashboard() {
                 <StatCard icon={Star} label="Ratings" value="4.82★" change={1} changeDir="up" color="#EAB308" />
                 <StatCard icon={AlertCircle} label="Complaints" value="0" change={0} changeDir="down" color="var(--danger)" />
                 <StatCard icon={Clock} label="Pending Jobs" value={pendingJobs} color="#64748B" />
+            </div>
+
+            {/* INSPECTION UPDATES SECTION */}
+            <SectionHeader title="Today's Inspection Analytics" icon={ClipboardList} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+                <StatCard icon={CheckCircle} label="Good Inspections" value={goodInspections} color="#10B981" />
+                <StatCard icon={XCircle} label="Bad Inspections" value={badInspections} color="#EF4444" />
+                <StatCard icon={AlertCircle} label="Unable to Resolve" value={unableInspections} color="#F59E0B" />
+            </div>
+
+            <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', fontWeight: 700 }}>
+                    Latest Inspection Updates
+                </div>
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Mechanic</th>
+                            <th>Booking / Bike</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {inspections.slice(0, 5).map((i, idx) => (
+                            <tr key={idx}>
+                                <td>{new Date(i.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                <td style={{ fontWeight: 600 }}>{i.mechanics?.profiles?.full_name || 'N/A'}</td>
+                                <td>#{i.bookings?.booking_number} <br /><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{i.bookings?.vehicles?.registration_no}</span></td>
+                                <td>
+                                    <span className={`badge ${i.inspection_result === 'Good' ? 'badge-success' : i.inspection_result === 'Bad' ? 'badge-danger' : i.inspection_result === 'Unable to Resolve' ? 'badge-warning' : 'badge-muted'}`}>
+                                        {i.inspection_result || 'Pending'}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             {/* MECHANIC APPROVAL SECTION */}

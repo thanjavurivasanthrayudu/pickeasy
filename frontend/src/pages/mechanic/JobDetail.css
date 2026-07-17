@@ -1,0 +1,90 @@
+.job-detail-container {
+    padding-bottom: 40px;
+}
+
+.job-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.job-detail-back-btn {
+    padding: 8px;
+}
+
+.job-detail-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.job-detail-subtitle {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.job-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.action-status-card {
+    margin-top: 24px;
+}
+
+.action-status-current {
+    margin-bottom: 16px;
+}
+
+.action-button-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-action:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.loading-container {
+    padding: 60px;
+    text-align: center;
+    color: var(--text-muted);
+}

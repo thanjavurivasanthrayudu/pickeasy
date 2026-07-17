@@ -43,7 +43,7 @@ BEGIN
        INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
        VALUES (v_customer_user_id, 'Mechanic on the way', 'The mechanic is on their way for booking #' || NEW.booking_number, 'booking', false, 'system');
        
-    WHEN 'arrived' THEN
+    WHEN 'mechanic_arrived' THEN
        INSERT INTO notifications (user_id, title, body, reference_type, is_read, notification_type)
        VALUES (v_customer_user_id, 'Mechanic Arrived', 'The mechanic has arrived for booking #' || NEW.booking_number, 'booking', false, 'mechanic_arrived');
        

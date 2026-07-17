@@ -216,7 +216,7 @@ export default function JobDetail() {
           {/* Persistent Inspection Button (Only disabled if actively updating) */}
           <button
             disabled={isUpdating}
-            onClick={() => navigate(`/mechanic/jobs/${id}/inspection`)}
+            onClick={() => navigate(`/mechanic/inspection`)}
             className="btn btn-ghost btn-action btn-inspect"
           >
             <FileText size={16} /> View Inspection

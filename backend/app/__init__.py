@@ -100,6 +100,7 @@ def create_app(config_class=None) -> Flask:
 
 def _register_blueprints(app: Flask) -> None:
     """Register all API blueprints under /api/v1."""
+    from app.api.v1.routes.ai import ai_bp
     from app.api.v1.routes.auth import auth_bp
     from app.api.v1.routes.admin import admin_bp
     from app.api.v1.routes.booking import booking_bp
@@ -128,6 +129,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(review_bp, url_prefix=f"{prefix}/reviews")
     app.register_blueprint(notification_bp, url_prefix=f"{prefix}/notifications")
     app.register_blueprint(inventory_bp, url_prefix=f"{prefix}/inventory")
+    app.register_blueprint(ai_bp, url_prefix=f"{prefix}/ai")
     app.register_blueprint(report_bp, url_prefix=f"{prefix}/reports")
     app.register_blueprint(coupon_bp, url_prefix=f"{prefix}/coupons")
     app.register_blueprint(inspection_bp, url_prefix=f"{prefix}/inspections")
