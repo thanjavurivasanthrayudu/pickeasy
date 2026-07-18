@@ -14,14 +14,14 @@ export default function Inventory() {
   const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState({
-    name: '', sku: '', category: '', brand: '',
-    quantity_in_stock: 0, reorder_level: 5, selling_price: 0, purchase_price: 0, vendor_name: '', location: ''
+    part_name: '', part_number: '', category: '', brand: '',
+    quantity: 0, min_quantity: 5, unit_price: 0, supplier: '', location: ''
   })
 
   const fetchInventory = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
-      .from('inventory_items')
+      .from('inventory')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -37,7 +37,7 @@ export default function Inventory() {
   useEffect(() => { fetchInventory() }, [fetchInventory])
 
   const resetForm = () => {
-    setForm({ name: '', sku: '', category: '', brand: '', quantity_in_stock: 0, reorder_level: 5, selling_price: 0, purchase_price: 0, vendor_name: '', location: '' })
+    setForm({ part_name: '', part_number: '', category: '', brand: '', quantity: 0, min_quantity: 5, unit_price: 0, supplier: '', location: '' })
     setEditingItem(null)
   }
 
@@ -46,27 +46,27 @@ export default function Inventory() {
   const openEditModal = (item) => {
     setEditingItem(item)
     setForm({
-      name: item.name || '', sku: item.sku || '',
+      part_name: item.part_name || '', part_number: item.part_number || '',
       category: item.category || '', brand: item.brand || '',
-      quantity_in_stock: item.quantity_in_stock || 0, reorder_level: item.reorder_level || 5,
-      selling_price: item.selling_price || 0, purchase_price: item.purchase_price || 0, vendor_name: item.vendor_name || '', location: item.location || ''
+      quantity: item.quantity || 0, min_quantity: item.min_quantity || 5,
+      unit_price: item.unit_price || 0, supplier: item.supplier || '', location: item.location || ''
     })
     setShowModal(true)
   }
 
   const handleSave = async () => {
-    if (!form.name.trim()) return toast.error('Part name is required')
-    if (!form.selling_price || form.selling_price <= 0) return toast.error('Selling price must be greater than 0')
+    if (!form.part_name.trim()) return toast.error('Part name is required')
+    if (!form.unit_price || form.unit_price <= 0) return toast.error('Unit price must be greater than 0')
     setSaving(true)
 
     if (editingItem) {
-      const { error } = await supabase.from('inventory_items').update({
-        ...form, selling_price: Number(form.selling_price), purchase_price: Number(form.purchase_price), quantity_in_stock: Number(form.quantity_in_stock), reorder_level: Number(form.reorder_level)
+      const { error } = await supabase.from('inventory').update({
+        ...form, unit_price: Number(form.unit_price), quantity: Number(form.quantity), min_quantity: Number(form.min_quantity)
       }).eq('id', editingItem.id)
       if (error) { toast.error(error.message) } else { toast.success('Item updated!') }
     } else {
-      const { error } = await supabase.from('inventory_items').insert({
-        ...form, selling_price: Number(form.selling_price), purchase_price: Number(form.purchase_price), quantity_in_stock: Number(form.quantity_in_stock), reorder_level: Number(form.reorder_level)
+      const { error } = await supabase.from('inventory').insert({
+        ...form, unit_price: Number(form.unit_price), quantity: Number(form.quantity), min_quantity: Number(form.min_quantity)
       })
       if (error) { toast.error(error.message) } else { toast.success('Item added!') }
     }
@@ -79,13 +79,13 @@ export default function Inventory() {
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this item?')) return
-    const { error } = await supabase.from('inventory_items').delete().eq('id', id)
+    const { error } = await supabase.from('inventory').delete().eq('id', id)
     if (error) { toast.error(error.message) } else { toast.success('Item deleted!'); fetchInventory() }
   }
 
   const categories = ['All', ...new Set(items.map(i => i.category).filter(Boolean))]
-  const lowStockCount = items.filter(i => (i.quantity_in_stock || 0) <= (i.reorder_level || 0)).length
-  const totalValue = items.reduce((sum, i) => sum + ((i.quantity_in_stock || 0) * (i.selling_price || 0)), 0)
+  const lowStockCount = items.filter(i => i.quantity <= i.min_quantity).length
+  const totalValue = items.reduce((sum, i) => sum + (i.quantity * i.unit_price), 0)
 
   const filtered = items.filter(i => {
     const matchSearch = !search || JSON.stringify(i).toLowerCase().includes(search.toLowerCase())
@@ -177,20 +177,20 @@ export default function Inventory() {
             <tbody>
               {filtered.map(item => (
                 <tr key={item.id} style={{ borderTop: '1px solid var(--border)' }}>
-                  <td style={{ padding: '14px 20px', fontWeight: 600 }}>{item.name}</td>
-                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: 13 }}>{item.sku || '—'}</td>
+                  <td style={{ padding: '14px 20px', fontWeight: 600 }}>{item.part_name}</td>
+                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: 13 }}>{item.part_number || '—'}</td>
                   <td style={{ padding: '14px 20px' }}>
                     <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: 'var(--primary-light)', color: 'var(--primary)' }}>{item.category || 'N/A'}</span>
                   </td>
                   <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>{item.brand || '—'}</td>
                   <td style={{ padding: '14px 20px', fontWeight: 700 }}>
-                    <span style={{ color: (item.quantity_in_stock || 0) <= (item.reorder_level || 0) ? '#EF4444' : 'var(--text-primary)' }}>
-                      {item.quantity_in_stock || 0} {(item.quantity_in_stock || 0) <= (item.reorder_level || 0) && <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginLeft: 4 }} />}
+                    <span style={{ color: item.quantity <= item.min_quantity ? '#EF4444' : 'var(--text-primary)' }}>
+                      {item.quantity} {item.quantity <= item.min_quantity && <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginLeft: 4 }} />}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 20px', color: 'var(--text-muted)' }}>{item.reorder_level || 0}</td>
-                  <td style={{ padding: '14px 20px', fontWeight: 600 }}>₹{Number(item.selling_price || 0).toLocaleString()}</td>
-                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>{item.vendor_name || '—'}</td>
+                  <td style={{ padding: '14px 20px', color: 'var(--text-muted)' }}>{item.min_quantity}</td>
+                  <td style={{ padding: '14px 20px', fontWeight: 600 }}>₹{Number(item.unit_price).toLocaleString()}</td>
+                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>{item.supplier || '—'}</td>
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => openEditModal(item)} style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer' }} title="Edit">
@@ -218,15 +218,14 @@ export default function Inventory() {
             </div>
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[
-                { label: 'Part Name *', key: 'name', type: 'text' },
-                { label: 'SKU / Part Number', key: 'sku', type: 'text' },
+                { label: 'Part Name *', key: 'part_name', type: 'text' },
+                { label: 'Part Number', key: 'part_number', type: 'text' },
                 { label: 'Category', key: 'category', type: 'text' },
                 { label: 'Brand', key: 'brand', type: 'text' },
-                { label: 'Quantity', key: 'quantity_in_stock', type: 'number' },
-                { label: 'Reorder Level (Low Stock Alert)', key: 'reorder_level', type: 'number' },
-                { label: 'Selling Price (₹) *', key: 'selling_price', type: 'number' },
-                { label: 'Purchase Price (₹)', key: 'purchase_price', type: 'number' },
-                { label: 'Vendor / Supplier', key: 'vendor_name', type: 'text' },
+                { label: 'Quantity', key: 'quantity', type: 'number' },
+                { label: 'Min Quantity (Low Stock Alert)', key: 'min_quantity', type: 'number' },
+                { label: 'Unit Price (₹) *', key: 'unit_price', type: 'number' },
+                { label: 'Supplier', key: 'supplier', type: 'text' },
                 { label: 'Location / Rack', key: 'location', type: 'text' },
               ].map(f => (
                 <div key={f.key}>

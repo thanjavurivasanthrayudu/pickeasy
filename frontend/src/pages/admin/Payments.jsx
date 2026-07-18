@@ -42,7 +42,7 @@ export default function Payments() {
     const { data, error } = await supabase
       .from('bookings')
       .select(`
-        id, booking_number, total_amount, base_amount, status, payment_status, created_at,
+        id, booking_number, total_amount, base_amount, status, created_at, customer_id,
         customers(profiles(full_name, email)),
         mechanics(profiles(full_name)),
         service_packages(name, base_price)
@@ -59,45 +59,49 @@ export default function Payments() {
   // Use payments table if it has data, otherwise show booking-derived payment info
   const displayPayments = payments.length > 0 ? payments : []
 
-  const totalRevenue = bookingPayments
-    .filter(b => b.status === 'completed' || b.status === 'paid')
+    .filter(b => b.status === 'completed')
     .reduce((sum, b) => sum + Number(b.total_amount || b.base_amount || b.service_packages?.base_price || 0), 0)
 
   const pendingAmount = bookingPayments
-    .filter(b => b.payment_status === 'pending' || (!b.payment_status && b.status !== 'cancelled'))
+    .filter(b => b.status !== 'cancelled' && b.status !== 'completed' && !displayPayments.some(p => p.booking_id === b.id && p.status === 'captured'))
     .reduce((sum, b) => sum + Number(b.total_amount || b.base_amount || b.service_packages?.base_price || 0), 0)
 
   const completedPayments = payments.filter(p => p.status === 'captured').length
   const failedPayments = payments.filter(p => p.status === 'failed').length
 
-  // Merge: show payment records + bookings with financial data
-  const allRecords = payments.length > 0
-    ? payments.map(p => ({
-      id: p.id,
-      bookingNumber: p.bookings?.booking_number || 'N/A',
-      customer: p.bookings?.customers?.profiles?.full_name || 'N/A',
-      mechanic: p.bookings?.mechanics?.profiles?.full_name || 'N/A',
-      service: p.bookings?.service_packages?.name || 'N/A',
-      amount: Number(p.amount || 0),
-      method: p.method || 'N/A',
-      status: p.status || 'pending',
-      date: p.created_at,
-      razorpay_id: p.razorpay_payment_id,
-      type: 'payment'
-    }))
-    : bookingPayments.map(b => ({
-      id: b.id,
+  // Merge: show payment records + bookings with financial data (only for bookings that don't have a payment record yet)
+  const bookingIdsWithPayments = new Set(payments.map(p => p.booking_id))
+
+  const allRecords = payments.map(p => ({
+    id: p.id,
+    booking_id: p.booking_id,
+    customer_id: p.customer_id,
+    bookingNumber: p.bookings?.booking_number || 'N/A',
+    customer: p.bookings?.customers?.profiles?.full_name || 'N/A',
+    mechanic: p.bookings?.mechanics?.profiles?.full_name || 'N/A',
+    service: p.bookings?.service_packages?.name || 'N/A',
+    amount: Number(p.amount || 0),
+    method: p.method || 'N/A',
+    status: p.status || 'pending',
+    date: p.created_at,
+    razorpay_id: p.razorpay_payment_id,
+    type: 'payment'
+  }))
+    .concat(bookingPayments.filter(b => !bookingIdsWithPayments.has(b.id)).map(b => ({
+      id: b.id, // This is the booking ID
+      booking_id: b.id,
+      customer_id: b.customer_id,
       bookingNumber: b.booking_number || b.id?.substring(0, 8),
       customer: b.customers?.profiles?.full_name || 'N/A',
       mechanic: b.mechanics?.profiles?.full_name || 'Unassigned',
       service: b.service_packages?.name || 'N/A',
       amount: Number(b.total_amount || b.base_amount || b.service_packages?.base_price || 0),
       method: '—',
-      status: b.payment_status || (b.status === 'completed' ? 'captured' : b.status === 'cancelled' ? 'failed' : 'pending'),
+      status: b.status === 'completed' ? 'captured' : b.status === 'cancelled' ? 'failed' : 'pending',
       date: b.created_at,
       razorpay_id: null,
       type: 'booking'
-    }))
+    })))
 
   const filteredRecords = allRecords.filter(r => {
     const matchSearch = !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase())
@@ -105,19 +109,67 @@ export default function Payments() {
     return matchSearch && matchStatus
   })
 
-  const statusBadge = (status) => {
-    const map = {
-      captured: { bg: '#ECFDF5', color: '#10B981', icon: CheckCircle, label: 'Captured' },
-      paid: { bg: '#ECFDF5', color: '#10B981', icon: CheckCircle, label: 'Paid' },
-      pending: { bg: '#FFFBEB', color: '#F59E0B', icon: Clock, label: 'Pending' },
-      failed: { bg: '#FEF2F2', color: '#EF4444', icon: XCircle, label: 'Failed' },
-      refunded: { bg: '#EFF6FF', color: '#3B82F6', icon: ArrowDown, label: 'Refunded' }
+  const updateStatus = async (record, newStatus) => {
+    if (record.status === newStatus) return
+    const loadingToast = toast.loading('Updating status...')
+
+    try {
+      if (record.type === 'payment') {
+        const { error } = await supabase.from('payments').update({ status: newStatus }).eq('id', record.id)
+        if (error) throw error
+      } else {
+        // Create new payment record since it was derived from booking
+        const { error } = await supabase.from('payments').insert({
+          booking_id: record.booking_id,
+          customer_id: record.customer_id,
+          amount: record.amount,
+          method: 'cash',
+          status: newStatus
+        })
+        if (error) throw error
+      }
+      toast.success('Payment status updated!', { id: loadingToast })
+      fetchPayments()
+      fetchBookingPayments()
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update status', { id: loadingToast })
     }
-    const s = map[status] || map.pending
+  }
+
+  const StatusSelector = ({ record }) => {
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>
-        <s.icon size={13} /> {s.label}
-      </span>
+      <select
+        value={record.status}
+        onChange={(e) => updateStatus(record, e.target.value)}
+        style={{
+          padding: '6px 12px',
+          borderRadius: 20,
+          fontSize: 12,
+          fontWeight: 700,
+          border: 'none',
+          outline: 'none',
+          cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          textAlign: 'center',
+          ...(() => {
+            const map = {
+              captured: { bg: '#ECFDF5', color: '#10B981' },
+              paid: { bg: '#ECFDF5', color: '#10B981' },
+              pending: { bg: '#FFFBEB', color: '#F59E0B' },
+              failed: { bg: '#FEF2F2', color: '#EF4444' },
+              refunded: { bg: '#EFF6FF', color: '#3B82F6' }
+            }
+            return map[record.status] || map.pending
+          })()
+        }}
+      >
+        <option value="pending">Pending</option>
+        <option value="captured">Captured (Paid)</option>
+        <option value="failed">Failed</option>
+        <option value="refunded">Refunded</option>
+      </select>
     )
   }
 
@@ -201,7 +253,12 @@ export default function Payments() {
                   <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>{r.service}</td>
                   <td style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--primary)' }}>₹{r.amount.toLocaleString()}</td>
                   <td style={{ padding: '14px 20px', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{r.method}</td>
-                  <td style={{ padding: '14px 20px' }}>{statusBadge(r.status)}</td>
+                  <td style={{ padding: '14px 20px' }}>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <StatusSelector record={r} />
+                      <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 10, opacity: 0.5 }}>▼</div>
+                    </div>
+                  </td>
                   <td style={{ padding: '14px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{new Date(r.date).toLocaleDateString()}</td>
                 </tr>
               ))}

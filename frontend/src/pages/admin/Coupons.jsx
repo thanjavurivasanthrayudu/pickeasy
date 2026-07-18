@@ -14,7 +14,7 @@ export default function CouponManagement() {
 
   const [form, setForm] = useState({
     code: '', description: '', discount_type: 'percentage', discount_value: 0,
-    max_discount: '', min_booking_amount: 0, usage_limit: 100,
+    max_discount: '', min_order_value: 0, max_uses: 100,
     valid_from: '', valid_until: '', is_active: true
   })
 
@@ -39,7 +39,7 @@ export default function CouponManagement() {
   const resetForm = () => {
     setForm({
       code: '', description: '', discount_type: 'percentage', discount_value: 0,
-      max_discount: '', min_booking_amount: 0, usage_limit: 100,
+      max_discount: '', min_order_value: 0, max_uses: 100,
       valid_from: '', valid_until: '', is_active: true
     })
     setEditingCoupon(null)
@@ -55,8 +55,8 @@ export default function CouponManagement() {
       discount_type: coupon.discount_type || 'percentage',
       discount_value: coupon.discount_value || 0,
       max_discount: coupon.max_discount || '',
-      min_booking_amount: coupon.min_booking_amount || 0,
-      usage_limit: coupon.usage_limit || 100,
+      min_order_value: coupon.min_order_value || 0,
+      max_uses: coupon.max_uses || 100,
       valid_from: coupon.valid_from ? new Date(coupon.valid_from).toISOString().slice(0, 16) : '',
       valid_until: coupon.valid_until ? new Date(coupon.valid_until).toISOString().slice(0, 16) : '',
       is_active: coupon.is_active !== false
@@ -75,8 +75,8 @@ export default function CouponManagement() {
       discount_type: form.discount_type,
       discount_value: Number(form.discount_value),
       max_discount: form.max_discount ? Number(form.max_discount) : null,
-      min_booking_amount: Number(form.min_booking_amount),
-      usage_limit: Number(form.usage_limit),
+      min_order_value: Number(form.min_order_value),
+      max_uses: Number(form.max_uses),
       valid_from: form.valid_from ? new Date(form.valid_from).toISOString() : null,
       valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : null,
       is_active: form.is_active
@@ -203,10 +203,10 @@ export default function CouponManagement() {
                     {c.discount_type === 'percentage' ? `${c.discount_value}%` : `₹${c.discount_value}`}
                     {c.max_discount && <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block' }}>max ₹{c.max_discount}</span>}
                   </td>
-                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>₹{Number(c.min_booking_amount || 0).toLocaleString()}</td>
+                  <td style={{ padding: '14px 20px', color: 'var(--text-secondary)' }}>₹{Number(c.min_order_value || 0).toLocaleString()}</td>
                   <td style={{ padding: '14px 20px' }}>
                     <span style={{ fontWeight: 700 }}>{c.used_count || 0}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>/{c.usage_limit}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>/{c.max_uses}</span>
                   </td>
                   <td style={{ padding: '14px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>
                     {c.valid_until ? (
@@ -282,14 +282,14 @@ export default function CouponManagement() {
                     style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Min Booking Amount (₹)</label>
-                  <input type="number" value={form.min_booking_amount} onChange={e => setForm(p => ({ ...p, min_booking_amount: e.target.value }))}
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Min Order Value (₹)</label>
+                  <input type="number" value={form.min_order_value} onChange={e => setForm(p => ({ ...p, min_order_value: e.target.value }))}
                     style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }} />
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Usage Limit</label>
-                <input type="number" value={form.usage_limit} onChange={e => setForm(p => ({ ...p, usage_limit: e.target.value }))}
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Max Uses</label>
+                <input type="number" value={form.max_uses} onChange={e => setForm(p => ({ ...p, max_uses: e.target.value }))}
                   style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
