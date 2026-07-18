@@ -263,8 +263,8 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--danger)' }}>14</div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Purchase Stock</button>
-                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Manage Vendors</button>
+                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-inverse)', border: '1px solid var(--border)' }}>Manage Inventory</button>
+                            <button onClick={() => navigate('/admin/inventory')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-inverse)', border: '1px solid var(--border)' }}>Manage Vendors</button>
                         </div>
                     </div>
                 </div>
@@ -294,8 +294,8 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: 20, fontWeight: 800, color: '#F59E0B' }}>₹0</div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Calculate Commission</button>
-                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>Process Refunds</button>
+                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-inverse)', border: '1px solid var(--border)' }}>View Payments</button>
+                            <button onClick={() => navigate('/admin/payments')} className="btn" style={{ background: 'var(--secondary)', color: 'var(--text-inverse)', border: '1px solid var(--border)' }}>Payment Settings</button>
                         </div>
                     </div>
                 </div>
