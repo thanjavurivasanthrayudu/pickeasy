@@ -1,0 +1,25 @@
+  total_amount        DECIMAL(10,2) NOT NULL DEFAULT 0,
+  coupon_code         TEXT,
+  special_notes       TEXT,
+  customer_rating     INTEGER CHECK (customer_rating BETWEEN 1 AND 5),
+  customer_review     TEXT,
+  mechanic_arrived_at TIMESTAMPTZ,
+  service_started_at  TIMESTAMPTZ,
+  service_ended_at    TIMESTAMPTZ,
+  cancelled_at        TIMESTAMPTZ,
+  cancel_reason       TEXT,
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Auto-generate booking number
+CREATE OR REPLACE FUNCTION generate_booking_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.booking_number := 'ME' || TO_CHAR(NOW(), 'YYYYMMDD') || LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_booking_number ON bookings;
+CREATE TRIGGER trg_booking_number

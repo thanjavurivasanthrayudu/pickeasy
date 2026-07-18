@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS inspections (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  booking_id      UUID UNIQUE NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  mechanic_id     UUID NOT NULL REFERENCES mechanics(id),
+  started_at      TIMESTAMPTZ,
+  completed_at    TIMESTAMPTZ,
+  overall_rating  INTEGER CHECK (overall_rating BETWEEN 1 AND 5),
+  notes           TEXT,
+  photo_urls      TEXT[] DEFAULT '{}',
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── INSPECTION CHECKLIST ITEMS ────────────────────────────
+CREATE TABLE IF NOT EXISTS inspection_items (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  inspection_id   UUID NOT NULL REFERENCES inspections(id) ON DELETE CASCADE,
+  component       TEXT NOT NULL,
+  condition       TEXT CHECK (condition IN ('good','fair','needs_attention','critical')),
+  notes           TEXT,
+  photo_url       TEXT,
+  requires_part   BOOLEAN DEFAULT FALSE
+);
+
+-- ── SPARE PARTS (used in a booking) ──────────────────────
+CREATE TABLE IF NOT EXISTS spare_parts_used (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  inspection_id   UUID NOT NULL REFERENCES inspections(id) ON DELETE CASCADE,
+  part_name       TEXT NOT NULL,
+  part_number     TEXT,
+  quantity        INTEGER DEFAULT 1,

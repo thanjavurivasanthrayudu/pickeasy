@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS inventory (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  part_name       TEXT NOT NULL,
+  part_number     TEXT UNIQUE,
+  category        TEXT,
+  brand           TEXT,
+  quantity        INTEGER DEFAULT 0,
+  min_quantity    INTEGER DEFAULT 5,
+  unit_price      DECIMAL(10,2) NOT NULL,
+  supplier        TEXT,
+  location        TEXT,
+  is_active       BOOLEAN DEFAULT TRUE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
