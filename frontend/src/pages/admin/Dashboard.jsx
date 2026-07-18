@@ -49,6 +49,9 @@ export default function AdminDashboard() {
     const { data: profilesData, refetch } = useAllProfiles()
     const { data: inspectionsData } = useAdminInspections()
 
+    const [showAllInspections, setShowAllInspections] = useState(false)
+    const [selectedInspection, setSelectedInspection] = useState(null)
+
     const bookings = bookingsData || []
     const profiles = profilesData || []
     const navigate = useNavigate()
@@ -116,7 +119,11 @@ export default function AdminDashboard() {
             <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>Latest Inspection Updates</span>
-                    <button style={{ fontSize: 13, color: 'var(--primary)', cursor: 'pointer', background: 'transparent', border: 'none', fontWeight: 600 }}>View All Inspections →</button>
+                    {inspections.length > 5 && (
+                        <button onClick={() => setShowAllInspections(!showAllInspections)} style={{ fontSize: 13, color: 'var(--primary)', cursor: 'pointer', background: 'transparent', border: 'none', fontWeight: 600 }}>
+                            {showAllInspections ? "View Less ↑" : "View All Inspections →"}
+                        </button>
+                    )}
                 </div>
                 {inspections.length === 0 ? (
                     <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -134,10 +141,10 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {inspections.slice(0, 5).map((i, idx) => {
+                            {(showAllInspections ? inspections : inspections.slice(0, 5)).map((i, idx) => {
                                 const t = i.completed_at || i.created_at;
                                 return (
-                                    <tr key={idx}>
+                                    <tr key={idx} onClick={() => setSelectedInspection(i)} style={{ cursor: 'pointer' }}>
                                         <td>
                                             <div style={{ fontWeight: 600, fontSize: 13 }}>{new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                                             <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
@@ -294,6 +301,75 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
+            {/* INSPECTION DETAILS MODAL */}
+            {selectedInspection && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+                    <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0, overflow: 'hidden', animation: 'scaleIn 0.2s ease-out' }}>
+                        <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <ClipboardList size={22} color="var(--primary)" />
+                                <h3 style={{ margin: 0, fontSize: 16 }}>Inspection Details</h3>
+                            </div>
+                            <button onClick={() => setSelectedInspection(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: 20, maxHeight: '70vh', overflowY: 'auto' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                                <div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Booking Num</div>
+                                    <div style={{ fontWeight: 600 }}>#{selectedInspection.bookings?.booking_number}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Vehicle Reg.</div>
+                                    <div style={{ fontWeight: 600 }}>{selectedInspection.bookings?.vehicles?.registration_no || selectedInspection.bookings?.vehicles?.brand}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Mechanic</div>
+                                    <div style={{ fontWeight: 600 }}>{selectedInspection.mechanics?.profiles?.full_name || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Status</div>
+                                    <span className={`badge ${selectedInspection.inspection_result === 'Good' ? 'badge-success' : selectedInspection.inspection_result === 'Bad' ? 'badge-danger' : selectedInspection.inspection_result === 'Unable to Resolve' ? 'badge-warning' : 'badge-muted'}`}>
+                                        {selectedInspection.inspection_result || 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {selectedInspection.notes && (
+                                <div style={{ marginBottom: 20, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Mechanic Notes:</div>
+                                    <div style={{ fontSize: 14 }}>{selectedInspection.notes}</div>
+                                </div>
+                            )}
+
+                            <h4 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Checklist Results</h4>
+                            {selectedInspection.inspection_items?.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {selectedInspection.inspection_items.map((item, idx) => (
+                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8 }}>
+                                            <span style={{ fontWeight: 600, fontSize: 13 }}>{item.component}</span>
+                                            <span style={{
+                                                fontSize: 12, fontWeight: 700, textTransform: 'capitalize',
+                                                color: item.condition === 'good' ? '#10B981' : item.condition === 'fair' ? '#F59E0B' : '#EF4444'
+                                            }}>
+                                                {item.condition?.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>No checklist items logged for this inspection.</div>
+                            )}
+                        </div>
+
+                        <div style={{ padding: '12px 20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
+                            <button className="btn" onClick={() => setSelectedInspection(null)} style={{ background: 'var(--bg)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '6px 16px', borderRadius: 6, fontWeight: 600 }}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

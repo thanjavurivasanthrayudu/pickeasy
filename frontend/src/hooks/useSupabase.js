@@ -304,6 +304,7 @@ export function useAdminInspections() {
             .from('inspections')
             .select(`
                 *,
+                inspection_items(*),
                 mechanics!mechanic_id(profiles(full_name)),
                 bookings(booking_number, vehicles(brand, registration_no), customers(profiles(full_name)))
             `)
