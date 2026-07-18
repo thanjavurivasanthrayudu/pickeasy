@@ -304,7 +304,7 @@ export function useAdminInspections() {
             .from('inspections')
             .select(`
                 *,
-                mechanics(profiles(full_name)),
+                mechanics!mechanic_id(profiles(full_name)),
                 bookings(booking_number, vehicles(brand, registration_no), customers(profiles(full_name)))
             `)
             .order('created_at', { ascending: false })
