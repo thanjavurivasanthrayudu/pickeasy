@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     const pendingJobs = bookings.filter(b => b.status === 'pending' || b.status === 'in_progress').length
 
     const inspections = inspectionsData || []
-    const todaysInspections = inspections.filter(i => new Date(i.updated_at) >= today)
+    const todaysInspections = inspections.filter(i => new Date(i.created_at) >= today)
     const goodInspections = todaysInspections.filter(i => i.inspection_result === 'Good').length
     const badInspections = todaysInspections.filter(i => i.inspection_result === 'Bad').length
     const unableInspections = todaysInspections.filter(i => i.inspection_result === 'Unable to Resolve').length
@@ -114,33 +114,47 @@ export default function AdminDashboard() {
             </div>
 
             <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', fontWeight: 700 }}>
-                    Latest Inspection Updates
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Latest Inspection Updates</span>
+                    <button style={{ fontSize: 13, color: 'var(--primary)', cursor: 'pointer', background: 'transparent', border: 'none', fontWeight: 600 }}>View All Inspections →</button>
                 </div>
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Mechanic</th>
-                            <th>Booking / Bike</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {inspections.slice(0, 5).map((i, idx) => (
-                            <tr key={idx}>
-                                <td>{new Date(i.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                <td style={{ fontWeight: 600 }}>{i.mechanics?.profiles?.full_name || 'N/A'}</td>
-                                <td>#{i.bookings?.booking_number} <br /><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{i.bookings?.vehicles?.registration_no}</span></td>
-                                <td>
-                                    <span className={`badge ${i.inspection_result === 'Good' ? 'badge-success' : i.inspection_result === 'Bad' ? 'badge-danger' : i.inspection_result === 'Unable to Resolve' ? 'badge-warning' : 'badge-muted'}`}>
-                                        {i.inspection_result || 'Pending'}
-                                    </span>
-                                </td>
+                {inspections.length === 0 ? (
+                    <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <ClipboardList size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>No inspection records found.</div>
+                    </div>
+                ) : (
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Mechanic</th>
+                                <th>Booking / Bike</th>
+                                <th>Status</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {inspections.slice(0, 5).map((i, idx) => {
+                                const t = i.completed_at || i.created_at;
+                                return (
+                                    <tr key={idx}>
+                                        <td>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                        </td>
+                                        <td style={{ fontWeight: 600 }}>{i.mechanics?.profiles?.full_name || 'N/A'}</td>
+                                        <td>#{i.bookings?.booking_number} <br /><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{i.bookings?.vehicles?.registration_no || i.bookings?.vehicles?.brand}</span></td>
+                                        <td>
+                                            <span className={`badge ${i.inspection_result === 'Good' ? 'badge-success' : i.inspection_result === 'Bad' ? 'badge-danger' : i.inspection_result === 'Unable to Resolve' ? 'badge-warning' : 'badge-muted'}`}>
+                                                {i.inspection_result || 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                )}
             </div>
 
             {/* MECHANIC APPROVAL SECTION */}

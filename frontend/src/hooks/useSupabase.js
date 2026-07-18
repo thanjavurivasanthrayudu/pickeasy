@@ -307,7 +307,7 @@ export function useAdminInspections() {
                 mechanics(profiles(full_name)),
                 bookings(booking_number, vehicles(brand, registration_no), customers(profiles(full_name)))
             `)
-            .order('updated_at', { ascending: false })
+            .order('created_at', { ascending: false })
         if (error) throw error
         return data || []
     }, [])
