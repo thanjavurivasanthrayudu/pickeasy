@@ -59,6 +59,7 @@ export default function Payments() {
   // Use payments table if it has data, otherwise show booking-derived payment info
   const displayPayments = payments.length > 0 ? payments : []
 
+  const totalRevenue = bookingPayments
     .filter(b => b.status === 'completed')
     .reduce((sum, b) => sum + Number(b.total_amount || b.base_amount || b.service_packages?.base_price || 0), 0)
 
