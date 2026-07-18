@@ -312,30 +312,13 @@ Respond ONLY with this JSON (replace "Low" with "Medium" or "High" as appropriat
     <div style={{ backgroundColor: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
 
       {/* 1. PAGE HEADER */}
-      <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '16px 32px', display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ padding: 8, background: '#EFF6FF', borderRadius: 8 }}><FileCheck size={24} color="#3B82F6" /></div>
             Bike Inspections
           </h1>
           <p style={{ fontSize: 13, color: '#64748B', marginTop: 4, fontWeight: 500 }}>Manage active inspection routines and AI-assisted diagnostics.</p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ position: 'relative', cursor: 'pointer' }}>
-            <Bell size={22} color="#64748B" />
-            <span style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, background: '#EF4444', borderRadius: '50%', border: '2px solid white' }}></span>
-          </div>
-          <div style={{ height: 32, width: 1, backgroundColor: '#E2E8F0' }}></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{mechanic?.profiles?.full_name || 'Mechanic'}</div>
-              <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Senior Technician</div>
-            </div>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#3B82F6', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16 }}>
-              {mechanic?.profiles?.full_name?.charAt(0) || 'M'}
-            </div>
-          </div>
         </div>
       </div>
 
